@@ -32,6 +32,7 @@
 goog.provide('Blockly');
 
 goog.require('Blockly.Instrument'); // lyn's instrumentation code
+goog.require('Blockly.Folder'); // shirley's folder code
 
 // Blockly core dependencies.
 goog.require('Blockly.Block');
