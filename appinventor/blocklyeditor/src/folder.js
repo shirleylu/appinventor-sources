@@ -6,7 +6,8 @@
  * May be necessary to look at all the files and
  *      see what needs to be replicated for folders
  *  -- We will be looking at all the files as we reach them
- * What is realtime collaboration mode? Is it used in AI? TODO[realtime]
+ * What is realtime collaboration mode? Is it used in AI?
+ *  -- Don't worry about realtime collab says lyn.
  */
 
 /**
@@ -126,7 +127,7 @@ Blockly.Folder.prototype.initialize = function(workspace, prototypeName) {
     //    Blockly.bindEvent_(workspace.getCanvas(), 'blocklyWorkspaceChange', this,
     //        this.onchange);
     //}
-}
+};
 
 /**
  * Fill a folder with initial values.
@@ -137,12 +138,12 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
 
 }
 
-///**
-// * Fill a block with initial values.
-// * @param {!Blockly.Workspace} workspace The workspace to use.
-// * @param {string} prototypeName The typename of the block.
-// */
-//Blockly.Block.prototype.fill = function(workspace, prototypeName) {
+/**
+* Fill a folder with initial values.
+* @param {!Blockly.Workspace} workspace The workspace to use.
+* @param {string} prototypeName The typename of the block.
+*/
+Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
 //    this.outputConnection = null;
 //    this.nextConnection = null;
 //    this.previousConnection = null;
@@ -160,7 +161,7 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
 //    this.editable_ = true;
 //    this.collapsed_ = false;
 //
-//    this.workspace = workspace;
+    this.workspace = workspace;
 //    this.isInFlyout = workspace.isFlyout;
 //    // This is missing from our latest version
 //    //workspace.addTopBlock(this);
@@ -173,16 +174,32 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
 //            'Error: "%s" is an unknown language block.', prototypeName);
 //        goog.mixin(this, prototype);
 //    }
-//    // Call an initialization function, if it exists.
-//    if (goog.isFunction(this.init)) {
-//        this.init();
-//    }
+    // Call an initialization function, if it exists.
+    if (goog.isFunction(this.init)) {
+        this.init();
+    }
 //    // Bind an onchange function, if it exists.
 //    if ((!this.isInFlyout) && goog.isFunction(this.onchange)) {
 //        Blockly.bindEvent_(workspace.getCanvas(), 'blocklyWorkspaceChange', this,
 //            this.onchange);
 //    }
-//};
+};
+
+/**
+* Create and initialize the SVG representation of the folder.
+*/
+//This is called
+Blockly.Folder.prototype.initSvg = function() {
+    this.svg_ = new Blockly.FolderSvg(this);
+    this.svg_.init();
+    //TODO mousedownevent
+    //if (!Blockly.readOnly) {
+    //    Blockly.bindEvent_(this.svg_.getRootElement(), 'mousedown', this,
+    //        this.onMouseDown_);
+    //}
+    //doesn't need svg_.getRootElement() - there are no children.
+    this.workspace.getCanvas().appendChild(this.svgGroup_);
+};
 
 
 
@@ -254,18 +271,7 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
 //    return icons;
 //};
 //
-///**
-// * Create and initialize the SVG representation of the block.
-// */
-//Blockly.Block.prototype.initSvg = function() {
-//    this.svg_ = new Blockly.BlockSvg(this);
-//    this.svg_.init();
-//    if (!Blockly.readOnly) {
-//        Blockly.bindEvent_(this.svg_.getRootElement(), 'mousedown', this,
-//            this.onMouseDown_);
-//    }
-//    this.workspace.getCanvas().appendChild(this.svg_.getRootElement());
-//};
+
 //
 ///**
 // * Return the root node of the SVG or null if none exists.
