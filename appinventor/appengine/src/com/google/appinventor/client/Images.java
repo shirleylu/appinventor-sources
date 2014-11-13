@@ -485,4 +485,10 @@ public interface Images extends Resources {
   @Source("com/google/appinventor/images/yandex.png")
   ImageResource yandex();
 
+  /**
+      * Designer palette item: Folder
+      */
+    @Source("com/google/appinventor/images/folders.png")
+    ImageResource folders();
+
 }
