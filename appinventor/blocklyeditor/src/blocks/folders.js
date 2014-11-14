@@ -1,11 +1,11 @@
 'use strict';
 
-goog.provide('Blockly.Blocks.folder');
+goog.provide('Blockly.Folders.folder');
 
-Blockly.Blocks['folder'] = {
+Blockly.Folders['folder'] = {
     category: "Folders",
     init: function() {
-        this.setColour(Blockly.FOLDER_CATEGORY_HUES);
+        this.setColour(Blockly.FOLDER_CATEGORY_HUE);
         this.appendDummyInput()
             .appendField(new Blockly.FieldTextBlockInput('FOLDER NAME'), 'TEXT');
     },
