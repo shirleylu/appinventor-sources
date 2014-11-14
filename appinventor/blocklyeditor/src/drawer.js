@@ -79,6 +79,18 @@ Blockly.Drawer.buildTree_ = function() {
       }
     }
   }
+  for (var name in Blockly.Folders) {
+    var folder = Blockly.Folders[name];
+    // Blocks without a category are fragments used by the mutator dialog.
+    if (folder.category) {
+      var cat = Blockly.Drawer.PREFIX_ + window.encodeURI(folder.category);
+      if (cat in tree) {
+        tree[cat].push(name);
+      } else {
+        tree[cat] = [name];
+      }
+    }
+  }
   return tree;
 };
 

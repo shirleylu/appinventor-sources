@@ -41,6 +41,8 @@ goog.provide('Blockly.Folder');
 //goog.require('goog.asserts');
 //goog.require('goog.string');
 
+Blockly.FOLDER_CATEGORY_HUE = [241, 213, 146];
+
 /**
  * Unique ID counter for created folders.
  * @private
@@ -144,22 +146,14 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
 * @param {string} prototypeName The typename of the block.
 */
 Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
-//    this.outputConnection = null;
-//    this.nextConnection = null;
-//    this.previousConnection = null;
-//    this.inputList = [];
-//    this.inputsInline = false;
 //    this.rendered = false;
 //    this.disabled = false;
 //    this.tooltip = '';
 //    this.contextMenu = true;
 //
-//    this.parentBlock_ = null;
-//    this.childBlocks_ = [];
 //    this.deletable_ = true;
 //    this.movable_ = true;
 //    this.editable_ = true;
-//    this.collapsed_ = false;
 //
     this.workspace = workspace;
 //    this.isInFlyout = workspace.isFlyout;
