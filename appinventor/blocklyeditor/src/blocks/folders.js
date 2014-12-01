@@ -1,8 +1,8 @@
 'use strict';
 
-goog.provide('Blockly.Folders.folder');
+goog.provide('Blockly.Blocks.folder');
 
-Blockly.Folders['folder'] = {
+Blockly.Blocks['folder'] = {
     category: "Folders",
     init: function() {
         this.setColour(Blockly.FOLDER_CATEGORY_HUE);
