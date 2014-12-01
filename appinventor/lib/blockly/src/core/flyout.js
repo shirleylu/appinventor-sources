@@ -370,6 +370,15 @@ Blockly.Flyout.prototype.show = function(xmlList) {
     // Special category for procedures.
     Blockly.Procedures.flyoutCategory(blocks, gaps, margin,
         /** @type {!Blockly.Workspace} */ (this.workspace_));
+  } else if (xmlList == Blockly.Folders.NAME_TYPE) {
+    for (var i = 0, xml; xml = xmlList[i]; i++) {
+      if (xml.tagName && xml.tagName.toUpperCase() == 'BLOCK') {
+        var block = Blockly.Xml.domToBlock(
+            /** @type {!Blockly.Workspace} */ (this.workspace_), xml);
+        blocks.push(block);
+        gaps.push(margin * this.VERTICAL_SEPARATION_FACTOR); // [lyn, 10/06/13] introduced VERTICAL_SEPARATION_FACTOR
+      }
+    }
   } else {
     for (var i = 0, xml; xml = xmlList[i]; i++) {
       if (xml.tagName && xml.tagName.toUpperCase() == 'BLOCK') {
