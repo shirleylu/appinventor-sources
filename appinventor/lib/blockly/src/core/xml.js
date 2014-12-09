@@ -333,7 +333,12 @@ Blockly.Xml.domToBlockInner = function(workspace, xmlBlock, opt_reuseBlock) {
     block.fill(workspace, prototypeName);
     block.parent_ = parentBlock;
   } else {
-    block = Blockly.Block.obtain(workspace, prototypeName);
+      if (prototypeName == "folder") {
+        //here block is actually a Blockly.Folder() instance
+        block = Blockly.Folder.obtain(workspace,prototypeName);
+      } else {
+        block = Blockly.Block.obtain(workspace, prototypeName);
+      }
   }
   if (!block.svg_) {
     block.initSvg();
