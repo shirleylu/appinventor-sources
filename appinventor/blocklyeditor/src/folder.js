@@ -45,6 +45,7 @@ goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.string');
 
+Blockly.FOLDER_CATEGORY_HUE = [241, 213, 146];
 
 /**
  * Unique ID counter for created blocks.
@@ -299,6 +300,7 @@ Blockly.Folder.terminateDrag_ = function() {
     }
     var selected = Blockly.selected;
     if (Blockly.Folder.dragMode_ == 2) {
+        console.log("terminate");
         // Terminate a drag operation.
         if (selected) {
             // Update the connection locations.
@@ -378,7 +380,7 @@ Blockly.Folder.prototype.dispose = function(healStack, animate,
     if (Blockly.selected == this) {
         Blockly.selected = null;
         // If there's a drag in-progress, unlink the mouse events.
-        Blockly.terminateDrag_();
+        Blockly.Folder.terminateDrag_();
     }
 
     // If this block has a context menu open, close it.
@@ -574,7 +576,7 @@ Blockly.Folder.prototype.onMouseDown_ = function(e) {
     }
     // Update Blockly's knowledge of its own location.
     Blockly.svgResize();
-    Blockly.terminateDrag_();
+    Blockly.Folder.terminateDrag_();
     this.select();
     Blockly.hideChaff();
     if (Blockly.isRightButton(e)) {
@@ -635,7 +637,7 @@ Blockly.Folder.prototype.onMouseUp_ = function(e) {
     var this_ = this;
     Blockly.resetWorkspaceArrangements();
     Blockly.doCommand(function() {
-        Blockly.terminateDrag_();
+        Blockly.Folder.terminateDrag_();
         if (Blockly.selected && Blockly.highlightedConnection_) {
             // Connect two blocks together.
             Blockly.localConnection_.connect(Blockly.highlightedConnection_);
