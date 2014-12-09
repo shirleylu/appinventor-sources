@@ -87,8 +87,8 @@ Blockly.genFolderUid = function() {
  */
 
 Blockly.Folder = function () {
-    //goog.asserts.assert(arguments.length == 0,
-    //    'Please use Blockly.Block.obtain.');
+    goog.asserts.assert(arguments.length == 0,
+        'Please use Blockly.Folder.obtain.');
 };
 
 /**
@@ -120,7 +120,7 @@ Blockly.Folder.obtain = function (workspace, prototypeName) {
 
 Blockly.Folder.prototype.initialize = function(workspace, prototypeName) {
     this.id = Blockly.genFolderUid();
-    //workspace.addTopBlock(this); - we don't want to add as top block. check what addTopBlock does TODO
+    //workspace.addTopBlock(this); - we don't want to add as top block. check what addTopBlock does
     this.fill(workspace, prototypeName); //this.fill TODO
 
 
@@ -130,15 +130,6 @@ Blockly.Folder.prototype.initialize = function(workspace, prototypeName) {
     //        this.onchange);
     //}
 };
-
-/**
- * Fill a folder with initial values.
- * @param {!Blockly.Workspace} workspace The workspace to use
- * @param {string} prototypeName The typename of the block.
- */
-Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
-
-}
 
 /**
 * Fill a folder with initial values.
@@ -151,23 +142,23 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
 //    this.tooltip = '';
 //    this.contextMenu = true;
 //
-//    this.deletable_ = true;
+//    this.deletable_ = true; when this is turned on we need to change things
 //    this.movable_ = true;
 //    this.editable_ = true;
 //
     this.workspace = workspace;
-//    this.isInFlyout = workspace.isFlyout;
+    this.isInFlyout = workspace.isFlyout;
 //    // This is missing from our latest version
 //    //workspace.addTopBlock(this);
 //
 //    // Copy the type-specific functions and data from the prototype.
-//    if (prototypeName) {
-//        this.type = prototypeName;
-//        var prototype = Blockly.Blocks[prototypeName];
-//        goog.asserts.assertObject(prototype,
-//            'Error: "%s" is an unknown language block.', prototypeName);
-//        goog.mixin(this, prototype);
-//    }
+    if (prototypeName) {
+        this.type = prototypeName;
+        var prototype = Blockly.Blocks[prototypeName];
+        goog.asserts.assertObject(prototype,
+            'Error: "%s" is an unknown language block.', prototypeName);
+        goog.mixin(this, prototype);
+    }
     // Call an initialization function, if it exists.
     if (goog.isFunction(this.init)) {
         this.init();
@@ -244,27 +235,27 @@ Blockly.Folder.prototype.initSvg = function() {
 // */
 //Blockly.Block.prototype.errorIcon = null;
 //
-///**
-// * Returns a list of mutator, comment, and warning icons.
-// * @return {!Array} List of icons.
-// */
-//Blockly.Block.prototype.getIcons = function() {
-//    var icons = [];
-//    if (this.mutator) {
-//        icons.push(this.mutator);
-//    }
-//    if (this.comment) {
-//        icons.push(this.comment);
-//    }
-//    if (this.warning) {
-//        icons.push(this.warning);
-//    }
-//    if (this.errorIcon) {
-//        icons.push(this.errorIcon);
-//    }
-//    return icons;
-//};
-//
+/**
+* Returns a list of mutator, comment, and warning icons.
+* @return {!Array} List of icons.
+*/
+Blockly.Folder.prototype.getIcons = function() {
+    var icons = [];
+    if (this.mutator) {
+        icons.push(this.mutator);
+    }
+    if (this.comment) {
+        icons.push(this.comment);
+    }
+    if (this.warning) {
+        icons.push(this.warning);
+    }
+    if (this.errorIcon) {
+        icons.push(this.errorIcon);
+    }
+    return icons;
+};
+
 
 //
 ///**
@@ -1023,13 +1014,14 @@ Blockly.Folder.prototype.initSvg = function() {
 //        e.stopPropagation();
 //    });
 //};
-//
+
+//Folders do not have connections - they do not need a bumpNeighbours_ function
 ///**
-// * Bump unconnected blocks out of alignment.  Two blocks which aren't actually
-// * connected should not coincidentally line up on screen.
-// * @private
-// */
-//Blockly.Block.prototype.bumpNeighbours_ = function() {
+//* Bump unconnected blocks out of alignment.  Two blocks which aren't actually
+//* connected should not coincidentally line up on screen.
+//* @private
+//*/
+//Blockly.Folder.prototype.bumpNeighbours_ = function() {
 //    if (Blockly.Block.dragMode_ != 0) {
 //        // Don't bump blocks during a drag.
 //        return;
@@ -1067,7 +1059,7 @@ Blockly.Folder.prototype.initSvg = function() {
 //        }
 //    }
 //};
-//
+
 ///**
 // * Return the parent block or null if this block is at the top level.
 // * @return {Blockly.Block} The block that holds the current block.
@@ -1304,42 +1296,42 @@ Blockly.Folder.prototype.initSvg = function() {
 // * Change the colour of a block.
 // * @param {number|Array} hueOrRGBArray HSV hue value or array of RGB values.
 // */
-//Blockly.Block.prototype.setColour = function(hueOrRGBArray) {
-//    if(Array.isArray(hueOrRGBArray)) {
-//        this.rgbArray_ = hueOrRGBArray;
-//        this.colourHue_ = null;
-//    } else {
-//        this.colourHue_ = hueOrRGBArray;
-//        this.rgbArray_ = null;
-//    }
-//    this.updateColour();
-//};
-//
-///**
-// * Update the colour of a block.
-// */
-//Blockly.Block.prototype.updateColour = function() {
-//    if (this.svg_) {
-//        this.svg_.updateColour();
-//    }
-//    var icons = this.getIcons();
-//    for (var x = 0; x < icons.length; x++) {
-//        icons[x].updateColour();
-//    }
-//    if (this.errorIcon) {
-//        this.errorIcon.updateColour();
-//    }
-//    if (this.rendered) {
-//        // Bump every dropdown to change its colour.
-//        for (var x = 0, input; input = this.inputList[x]; x++) {
-//            for (var y = 0, field; field = input.fieldRow[y]; y++) {
-//                field.setText(null);
-//            }
-//        }
-//        this.render();
-//    }
-//};
-//
+Blockly.Folder.prototype.setColour = function(hueOrRGBArray) {
+    if(Array.isArray(hueOrRGBArray)) {
+        this.rgbArray_ = hueOrRGBArray;
+        this.colourHue_ = null;
+    } else {
+        this.colourHue_ = hueOrRGBArray;
+        this.rgbArray_ = null;
+    }
+    this.updateColour();
+};
+
+/**
+* Update the colour of a block.
+*/
+Blockly.Folder.prototype.updateColour = function() {
+    if (this.svg_) {
+        this.svg_.updateColour();
+    }
+    var icons = this.getIcons();
+    for (var x = 0; x < icons.length; x++) {
+        icons[x].updateColour();
+    }
+    if (this.errorIcon) {
+        this.errorIcon.updateColour();
+    }
+    if (this.rendered) {
+        // Bump every dropdown to change its colour.
+        for (var x = 0, input; input = this.inputList[x]; x++) {
+            for (var y = 0, field; field = input.fieldRow[y]; y++) {
+                field.setText(null);
+            }
+        }
+        this.render();
+    }
+};
+
 ///**
 // * Returns the named field from a block.
 // * @param {string} name The name of the field.
@@ -1690,17 +1682,17 @@ Blockly.Folder.prototype.initSvg = function() {
 //Blockly.Block.prototype.appendIndentedValueInput = function(name) {
 //    return this.appendInput_(Blockly.INDENTED_VALUE, name);
 //};
-//
-///**
-// * Shortcut for appending a dummy input row.
-// * @param {string} opt_name Language-neutral identifier which may used to find
-// *     this input again.  Should be unique to this block.
-// * @return {!Blockly.Input} The input object created.
-// */
-//Blockly.Block.prototype.appendDummyInput = function(opt_name) {
-//    return this.appendInput_(Blockly.DUMMY_INPUT, opt_name || '');
-//};
-//
+
+/**
+* Shortcut for appending a dummy input row.
+* @param {string} opt_name Language-neutral identifier which may used to find
+*     this input again.  Should be unique to this block.
+* @return {!Blockly.Input} The input object created.
+*/
+Blockly.Folder.prototype.appendDummyInput = function(opt_name) {
+    return this.appendInput_(Blockly.DUMMY_INPUT, opt_name || '');
+};
+
 ///**
 // * Interpolate a message string, creating fields and inputs.
 // * @param {string} msg The message string to parse.  %1, %2, etc. are symbols
@@ -1813,33 +1805,33 @@ Blockly.Folder.prototype.initSvg = function() {
 //
 //Blockly.Block.prototype.interpolateMsg.SPLIT_REGEX_ = /(%\d+|\n)/;
 //Blockly.Block.prototype.interpolateMsg.INLINE_REGEX_ = /%1\s*$/;
-//
-//
-///**
-// * Add a value input, statement input or local variable to this block.
-// * @param {number} type Either Blockly.INPUT_VALUE, Blockly.NEXT_STATEMENT, Blockly.DUMMY_INPUT,
-// *     or subtypes Blockly.INDENTED_VALUE.
-// * @param {string} name Language-neutral identifier which may used to find this
-// *     input again.  Should be unique to this block.
-// * @return {!Blockly.Input} The input object created.
-// * @private
-// */
-//Blockly.Block.prototype.appendInput_ = function(type, name) {
-//    var connection = null;
-//    if (type == Blockly.INPUT_VALUE || type == Blockly.NEXT_STATEMENT || type == Blockly.INDENTED_VALUE) {
-//        connection = new Blockly.Connection(this, type);
-//    }
-//    var input = new Blockly.Input(type, name, this, connection);
-//    // Append input to list.
-//    this.inputList.push(input);
-//    if (this.rendered) {
-//        this.render();
-//        // Adding an input will cause the block to change shape.
-//        this.bumpNeighbours_();
-//    }
-//    return input;
-//};
-//
+
+
+/**
+* Add a value input, statement input or local variable to this block.
+* @param {number} type Either Blockly.INPUT_VALUE, Blockly.NEXT_STATEMENT, Blockly.DUMMY_INPUT,
+*     or subtypes Blockly.INDENTED_VALUE.
+* @param {string} name Language-neutral identifier which may used to find this
+*     input again.  Should be unique to this block.
+* @return {!Blockly.Input} The input object created.
+* @private
+*/
+Blockly.Folder.prototype.appendInput_ = function(type, name) {
+    var connection = null;
+    if (type == Blockly.INPUT_VALUE || type == Blockly.NEXT_STATEMENT || type == Blockly.INDENTED_VALUE) {
+        connection = new Blockly.Connection(this, type);
+    }
+    var input = new Blockly.Input(type, name, this, connection);
+    // Append input to list.
+    this.inputList.push(input);
+    if (this.rendered) {
+        this.render();
+        // Adding an input will cause the block to change shape.
+        //this.bumpNeighbours_();
+    }
+    return input;
+};
+
 ///**
 // * Move a named input to a different location on this block.
 // * @param {string} name The name of the input to move.
@@ -2069,33 +2061,33 @@ Blockly.Folder.prototype.initSvg = function() {
 //        }
 //    }
 //};
-//
-///**
-// * [lyn, 04/01/14] Global flag to control whether rendering is done.
-// * There is no need to render blocks in Blocky.SaveFile.load.
-// * We only need to render them when a Screen is loaded in the Blockly editor.
-// * This flag is used to turn off rendering for first case and turn it on for the second.
-// * @type {boolean}
-// */
-//Blockly.Block.isRenderingOn = true;
-//
-///**
-// * Render the block.
-// * Lays out and reflows a block based on its contents and settings.
-// */
-//Blockly.Block.prototype.render = function() {
-//    if (Blockly.Block.isRenderingOn) {
-//        goog.asserts.assertObject(this.svg_,
-//            'Uninitialized block cannot be rendered.  Call block.initSvg()');
-//        this.svg_.render();
-//        if (Blockly.Realtime.isEnabled() && !Blockly.Realtime.withinSync) {
-//            Blockly.Realtime.blockChanged(this);
-//        }
-//        Blockly.Instrument.stats.renderCalls++;
-//        // [lyn, 04/08/14] Because render is recursive, doesn't make sense to track its time here.
-//    }
-//};
-//
+
+/**
+* [lyn, 04/01/14] Global flag to control whether rendering is done.
+* There is no need to render blocks in Blocky.SaveFile.load.
+* We only need to render them when a Screen is loaded in the Blockly editor.
+* This flag is used to turn off rendering for first case and turn it on for the second.
+* @type {boolean}
+*/
+Blockly.Block.isRenderingOn = true;
+
+/**
+* Render the block.
+* Lays out and reflows a block based on its contents and settings.
+*/
+Blockly.Folder.prototype.render = function() {
+    if (Blockly.Folder.isRenderingOn) {
+        goog.asserts.assertObject(this.svg_,
+            'Uninitialized block cannot be rendered.  Call block.initSvg()');
+        this.svg_.render();
+        if (Blockly.Realtime.isEnabled() && !Blockly.Realtime.withinSync) {
+            Blockly.Realtime.blockChanged(this);
+        }
+        Blockly.Instrument.stats.renderCalls++;
+        // [lyn, 04/08/14] Because render is recursive, doesn't make sense to track its time here.
+    }
+};
+
 ///**
 // * [lyn, 04/01/14] Render a tree of blocks from top down rather than bottom up.
 // * This is in contrast to render(), which renders a block and all its antecedents.

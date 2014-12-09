@@ -55,12 +55,12 @@ Blockly.FolderSvg.prototype.updateMovable = function() {
 /**
  * Change the colour of a folder.
  */
-Blockly.BlockSvg.prototype.updateColour = function() {
-    if (this.block_.disabled) {
+Blockly.FolderSvg.prototype.updateColour = function() {
+    if (this.folder_.disabled) {
         // Disabled blocks don't have colour.
         return;
     }
-    var hexColour = Blockly.makeColour(this.block_.getColour());
+    var hexColour = Blockly.makeColour(this.folder_.getColour());
     var rgb = goog.color.hexToRgb(hexColour);
     var rgbLight = goog.color.lighten(rgb, 0.3);
     var rgbDark = goog.color.darken(rgb, 0.4);
