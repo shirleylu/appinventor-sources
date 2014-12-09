@@ -336,7 +336,6 @@ Blockly.Xml.domToBlockInner = function(workspace, xmlBlock, opt_reuseBlock) {
       if (prototypeName == "folder") {
         //here block is actually a Blockly.Folder() instance
         block = Blockly.Folder.obtain(workspace,prototypeName);
-        //console.log("now becoming folder");
       } else {
         block = Blockly.Block.obtain(workspace, prototypeName);
       }

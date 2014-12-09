@@ -85,7 +85,7 @@
     "./src/substitution.js",
     "./src/language_switch.js",
     "./src/folder.js",
-    "./src/folders.js",
+    "./src/folder_svg.js",
 
     //blocks files
     './src/blocks/control.js',
