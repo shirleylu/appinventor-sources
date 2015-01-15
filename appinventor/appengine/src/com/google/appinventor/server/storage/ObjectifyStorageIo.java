@@ -45,6 +45,7 @@ import com.google.appinventor.shared.storage.StorageUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 
 import com.googlecode.objectify.Key;
@@ -103,8 +104,7 @@ public class ObjectifyStorageIo implements  StorageIo {
 
   private final MemcacheService memcache = MemcacheServiceFactory.getMemcacheService();
 
-  private final GcsService gcsService =
-    GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance());
+  private final GcsService gcsService;
 
   private final String GCS_BUCKET_NAME = Flag.createFlag("gcs.bucket", "").get();
 
@@ -155,6 +155,16 @@ public class ObjectifyStorageIo implements  StorageIo {
 
   ObjectifyStorageIo() {
     fileService = FileServiceFactory.getFileService();
+    RetryParams retryParams = new RetryParams.Builder().initialRetryDelayMillis(100)
+      .retryMaxAttempts(10)
+      .totalRetryPeriodMillis(10000).build();
+    LOG.log(Level.INFO, "RetryParams: getInitialRetryDelayMillis() = " + retryParams.getInitialRetryDelayMillis());
+    LOG.log(Level.INFO, "RetryParams: getRequestTimeoutMillis() = " + retryParams.getRequestTimeoutMillis());
+    LOG.log(Level.INFO, "RetryParams: getRetryDelayBackoffFactor() = " + retryParams.getRetryDelayBackoffFactor());
+    LOG.log(Level.INFO, "RetryParams: getRetryMaxAttempts() = " + retryParams.getRetryMaxAttempts());
+    LOG.log(Level.INFO, "RetryParams: getRetryMinAttempts() = " + retryParams.getRetryMinAttempts());
+    LOG.log(Level.INFO, "RetryParams: getTotalRetryPeriodMillis() = " + retryParams.getTotalRetryPeriodMillis());
+    gcsService = GcsServiceFactory.createGcsService(retryParams);
     memcache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
     initMotd();
   }
@@ -162,6 +172,10 @@ public class ObjectifyStorageIo implements  StorageIo {
   // for testing
   ObjectifyStorageIo(FileService fileService) {
     this.fileService = fileService;
+    RetryParams retryParams = new RetryParams.Builder().initialRetryDelayMillis(100)
+      .retryMaxAttempts(10)
+      .totalRetryPeriodMillis(10000).build();
+    gcsService = GcsServiceFactory.createGcsService(retryParams);
     initMotd();
   }
 
@@ -552,12 +566,10 @@ public class ObjectifyStorageIo implements  StorageIo {
     if (useGCSforFile(fileName, content.length)) {
       file.isGCS = true;
       file.gcsName = makeGCSfileName(fileName, projectKey.getId());
-      if (content.length > 0) { // If there is actual content
-        GcsOutputChannel outputChannel =
-          gcsService.createOrReplace(new GcsFilename(GCS_BUCKET_NAME, file.gcsName), GcsFileOptions.getDefaultInstance());
-        outputChannel.write(ByteBuffer.wrap(content));
-        outputChannel.close();
-      }
+      GcsOutputChannel outputChannel =
+        gcsService.createOrReplace(new GcsFilename(GCS_BUCKET_NAME, file.gcsName), GcsFileOptions.getDefaultInstance());
+      outputChannel.write(ByteBuffer.wrap(content));
+      outputChannel.close();
     } else if (useBlobstoreForFile(fileName, content.length)) {
       file.isBlob = true;
       file.blobstorePath = uploadToBlobstore(content, makeBlobName(projectKey.getId(), fileName));
@@ -1362,12 +1374,10 @@ public class ObjectifyStorageIo implements  StorageIo {
             fd.isGCS = true;
             fd.gcsName = makeGCSfileName(fileName, projectId);
             try {
-              if (content.length > 0) { // If there is actual content
-                GcsOutputChannel outputChannel =
-                  gcsService.createOrReplace(new GcsFilename(GCS_BUCKET_NAME, fd.gcsName), GcsFileOptions.getDefaultInstance());
-                outputChannel.write(ByteBuffer.wrap(content));
-                outputChannel.close();
-              }
+              GcsOutputChannel outputChannel =
+                gcsService.createOrReplace(new GcsFilename(GCS_BUCKET_NAME, fd.gcsName), GcsFileOptions.getDefaultInstance());
+              outputChannel.write(ByteBuffer.wrap(content));
+              outputChannel.close();
             } catch (IOException e) {
               throw CrashReport.createAndLogError(LOG, null,
                 collectProjectErrorInfo(userId, projectId, fileName), e);
@@ -1478,7 +1488,7 @@ public class ObjectifyStorageIo implements  StorageIo {
       FileWriteChannel blobstoreWriteChannel = fileService.openWriteChannel(blobstoreFile, true);
 
       OutputStream blobstoreOutputStream = Channels.newOutputStream(blobstoreWriteChannel);
-      ByteStreams.copy(ByteStreams.newInputStreamSupplier(content), blobstoreOutputStream);
+      ByteStreams.copy(ByteSource.wrap(content).openStream(), blobstoreOutputStream);
       blobstoreOutputStream.flush();
       blobstoreOutputStream.close();
       blobstoreWriteChannel.closeFinally();
@@ -1632,22 +1642,53 @@ public class ObjectifyStorageIo implements  StorageIo {
     if (fileData != null) {
       if (fileData.isGCS) {     // It's in the Cloud Store
         try {
-          GcsFilename gcsFileName = new GcsFilename(GCS_BUCKET_NAME, fileData.gcsName);
-          int bytesRead = 0;
-          int fileSize = (int) gcsService.getMetadata(gcsFileName).getLength();
-          ByteBuffer resultBuffer = ByteBuffer.allocate(fileSize);
-          GcsInputChannel readChannel = gcsService.openReadChannel(gcsFileName, 0);
-          try {
-            while (bytesRead < fileSize) {
-              bytesRead += readChannel.read(resultBuffer);
-              if (bytesRead < fileSize) {
-                LOG.log(Level.INFO, "readChannel: bytesRead = " + bytesRead + " fileSize = " + fileSize);
+          int count;
+          boolean npfHappened = false;
+          boolean recovered = false;
+          for (count = 0; count < 5; count++) {
+            GcsFilename gcsFileName = new GcsFilename(GCS_BUCKET_NAME, fileData.gcsName);
+            int bytesRead = 0;
+            int fileSize = 0;
+            ByteBuffer resultBuffer;
+            try {
+              fileSize = (int) gcsService.getMetadata(gcsFileName).getLength();
+              resultBuffer = ByteBuffer.allocate(fileSize);
+              GcsInputChannel readChannel = gcsService.openReadChannel(gcsFileName, 0);
+              try {
+                while (bytesRead < fileSize) {
+                  bytesRead += readChannel.read(resultBuffer);
+                  if (bytesRead < fileSize) {
+                    LOG.log(Level.INFO, "readChannel: bytesRead = " + bytesRead + " fileSize = " + fileSize);
+                  }
+                }
+                recovered = true;
+                result.t = resultBuffer.array();
+                break;          // We got the data, break out of the loop!
+              } finally {
+                readChannel.close();
               }
+            } catch (NullPointerException e) {
+              // This happens if the object in GCS is non-existent, which would happen
+              // when people uploaded a zero length object. As of this change, we now
+              // store zero length objects into GCS, but there are plenty of older objects
+              // that are missing in GCS.
+              LOG.log(Level.WARNING, "downloadrawfile: NPF recorded for " + fileData.gcsName);
+              npfHappened = true;
+              resultBuffer = ByteBuffer.allocate(0);
+              result.t = resultBuffer.array();
             }
-          } finally {
-            readChannel.close();
           }
-          result.t = resultBuffer.array();
+
+          // report out on how things went above
+          if (npfHappened) {    // We lost at least once
+            if (recovered) {
+              LOG.log(Level.WARNING, "recovered from NPF in downloadrawfile filename = " + fileData.gcsName +
+                " count = " + count);
+            } else {
+              LOG.log(Level.WARNING, "FATAL NPF in downloadrawfile filename = " + fileData.gcsName);
+            }
+          }
+
         } catch (IOException e) {
           throw CrashReport.createAndLogError(LOG, null,
               collectProjectErrorInfo(userId, projectId, fileName), e);
@@ -1706,7 +1747,8 @@ public class ObjectifyStorageIo implements  StorageIo {
   public ProjectSourceZip exportProjectSourceZip(final String userId, final long projectId,
                                                  final boolean includeProjectHistory,
                                                  final boolean includeAndroidKeystore,
-                                                 @Nullable String zipName) throws IOException {
+                                                 @Nullable String zipName,
+                                                 final boolean fatalError) throws IOException {
     final Result<Integer> fileCount = new Result<Integer>();
     fileCount.t = 0;
     final Result<String> projectHistory = new Result<String>();
@@ -1754,7 +1796,7 @@ public class ObjectifyStorageIo implements  StorageIo {
       // blobs in the job.
       for (FileData fd : fileData) {
         fileName = fd.fileName;
-        byte[] data;
+        byte[] data = null;
         if (fd.isBlob) {
           try {
             data = getBlobstoreBytes(fd.blobstorePath);
@@ -1764,22 +1806,55 @@ public class ObjectifyStorageIo implements  StorageIo {
           }
         } else if (fd.isGCS) {
           try {
-            GcsFilename gcsFileName = new GcsFilename(GCS_BUCKET_NAME, fd.gcsName);
-            int bytesRead = 0;
-            int fileSize = (int) gcsService.getMetadata(gcsFileName).getLength();
-            ByteBuffer resultBuffer = ByteBuffer.allocate(fileSize);
-            GcsInputChannel readChannel = gcsService.openReadChannel(gcsFileName, 0);
-            try {
-              while (bytesRead < fileSize) {
-                bytesRead += readChannel.read(resultBuffer);
-                if (bytesRead < fileSize) {
-                  LOG.log(Level.INFO, "readChannel: bytesRead = " + bytesRead + " fileSize = " + fileSize);
+            int count;
+            boolean npfHappened = false;
+            boolean recovered = false;
+            for (count = 0; count < 5; count++) {
+              GcsFilename gcsFileName = new GcsFilename(GCS_BUCKET_NAME, fd.gcsName);
+              int bytesRead = 0;
+              int fileSize = 0;
+              ByteBuffer resultBuffer;
+              try {
+                fileSize = (int) gcsService.getMetadata(gcsFileName).getLength();
+                resultBuffer = ByteBuffer.allocate(fileSize);
+                GcsInputChannel readChannel = gcsService.openReadChannel(gcsFileName, 0);
+                try {
+                  while (bytesRead < fileSize) {
+                    bytesRead += readChannel.read(resultBuffer);
+                    if (bytesRead < fileSize) {
+                      LOG.log(Level.INFO, "readChannel: bytesRead = " + bytesRead + " fileSize = " + fileSize);
+                    }
+                  }
+                  recovered = true;
+                  data = resultBuffer.array();
+                  break;        // We got the data, break out of the loop!
+                } finally {
+                  readChannel.close();
+                }
+              } catch (NullPointerException e) {
+                // This happens if the object in GCS is non-existent, which would happen
+                // when people uploaded a zero length object. As of this change, we now
+                // store zero length objects into GCS, but there are plenty of older objects
+                // that are missing in GCS.
+                LOG.log(Level.WARNING, "exportProjectFile: NPF recorded for " + fd.gcsName);
+                npfHappened = true;
+                resultBuffer = ByteBuffer.allocate(0);
+                data = resultBuffer.array();
+              }
+            }
+
+            // report out on how things went above
+            if (npfHappened) {    // We lost at least once
+              if (recovered) {
+                LOG.log(Level.WARNING, "recovered from NPF in exportProjectFile filename = " + fd.gcsName +
+                  " count = " + count);
+              } else {
+                LOG.log(Level.WARNING, "FATAL NPF in exportProjectFile filename = " + fd.gcsName);
+                if (fatalError) {
+                  throw new IOException("FATAL Error reading file from GCS filename = " + fd.gcsName);
                 }
               }
-            } finally {
-              readChannel.close();
             }
-            data = resultBuffer.array();
           } catch (IOException e) {
             throw CrashReport.createAndLogError(LOG, null,
               collectProjectErrorInfo(userId, projectId, fileName), e);

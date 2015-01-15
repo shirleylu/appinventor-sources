@@ -208,6 +208,9 @@ public final class YoungAndroidFormUpgrader {
       } else if (componentType.equals("Ball")) {
         srcCompVersion = upgradeBallProperties(componentProperties, srcCompVersion);
 
+      } else if (componentType.equals("BarcodeScanner")) {
+        srcCompVersion = upgradeBarcodeScannerProperties(componentProperties, srcCompVersion);
+
       } else if (componentType.equals("BluetoothClient")) {
         srcCompVersion = upgradeBluetoothClientProperties(componentProperties, srcCompVersion);
 
@@ -424,6 +427,14 @@ public final class YoungAndroidFormUpgrader {
     if (srcCompVersion < 5) {
       // The callback parameters speed and heading were added to Flung.
       srcCompVersion = 5;
+    }
+    return srcCompVersion;
+  }
+  private static int upgradeBarcodeScannerProperties(Map<String, JSONValue> componentProperties,
+      int srcCompVersion) {
+    if (srcCompVersion < 2) {
+      // The UseExternalScanner property was added.
+      srcCompVersion = 2;
     }
     return srcCompVersion;
   }
@@ -817,6 +828,11 @@ public final class YoungAndroidFormUpgrader {
       // Properties related to this component have now been upgraded to version 2.
       srcCompVersion = 2;
     }
+    if (srcCompVersion < 3) {
+      // The HasMargins property was added.
+      componentProperties.put("HasMargins", new ClientJsonString("False"));
+      srcCompVersion = 3;
+    }
     return srcCompVersion;
   }
 
@@ -1152,14 +1168,15 @@ public final class YoungAndroidFormUpgrader {
 
   private static int upgradeWebViewerProperties(Map<String, JSONValue> componentProperties,
                                                 int srcCompVersion) {
-    if (srcCompVersion < 4) {
+    if (srcCompVersion < 5) {
       // The CanGoForward and CanGoBack methods were added.
       // No properties need to be modified to upgrade to version 2.
       // UsesLocation property added.
       // No properties need to be modified to upgrade to version 3.
       // WebViewString added
       // No properties need to be modified to upgrade to version 4.
-      srcCompVersion = 4;
+      // IgnoreSslError property added (version 5)
+      srcCompVersion = 5;
     }
     return srcCompVersion;
   }
