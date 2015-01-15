@@ -67,6 +67,7 @@ Blockly.Icon.prototype.createIcon_ = function() {
   /* Here's the markup that will be generated:
   <g class="blocklyIconGroup"></g>
   */
+  console.log(this);
   this.iconGroup_ = Blockly.createSvgElement('g', {}, null);
   this.block_.getSvgRoot().appendChild(this.iconGroup_);
   Blockly.bindEvent_(this.iconGroup_, 'mouseup', this, this.iconClick_);

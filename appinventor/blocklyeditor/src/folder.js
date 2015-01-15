@@ -1961,6 +1961,24 @@ Blockly.Folder.prototype.setMutator = function(mutator) {
 };
 
 /**
+ * Give this block a mini workspace.
+ * @param {Blockly.MiniWorkspace} miniworkspace A mini workspace.
+ */
+Blockly.Folder.prototype.setMiniWorkspace = function(miniworkspace) {
+    console.log("here3");
+    if (this.miniworkspace && this.miniworkspace !== miniworkspace) {
+        this.miniworkspace.dispose();
+    }
+    if (miniworkspace) {
+        miniworkspace.folder_ = this;
+        this.miniworkspace = miniworkspace;
+        if (this.svg_) {
+            miniworkspace.createIcon();
+        }
+    }
+};
+
+/**
  * Returns the comment on this block (or '' if none).
  * @return {string} Block's comment.
  */
