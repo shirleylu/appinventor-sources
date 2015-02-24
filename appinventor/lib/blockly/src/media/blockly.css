@@ -38,6 +38,9 @@
 .blocklySelected>.blocklyPathLight {
   display: none;
 }
+.blocklyDragging {
+  z-index: 1000;
+}
 .blocklyDragging>.blocklyPath, .blocklyDragging>.blocklyPathLight {
   fill-opacity: .8;
   stroke-opacity: .8;
