@@ -112,9 +112,6 @@
     "./src/generators/yail/variables.js",
     "./src/generators/yail/procedures.js",
 
-    //versioning files
-    "./src/versioning/017_blocksOverhaul.js",
-
     // Repl
     "./src/replmgr.js"
     ],
