@@ -52,8 +52,8 @@ Blockly.MiniWorkspace.prototype.createIcon = function() {
     //this.iconMark_.appendChild(document.createTextNode('\u2605'));
 };
 
-Blockly.MiniWorkspace.prototype.toggle = function() {
-    console.log(this.iconMark_.lastElementChild);
+Blockly.MiniWorkspace.prototype.toggleIcon = function() {
+    this.iconMark_.innerHTML = (this.iconMark_.innerHTML == "+" ? "-" : "+");
 };
 
 /**
@@ -64,10 +64,10 @@ Blockly.MiniWorkspace.prototype.toggle = function() {
  * @override
  */
 Blockly.MiniWorkspace.prototype.iconClick_ = function(e) {
+    this.toggleIcon();
     if (this.block_.isEditable()) {
         Blockly.Icon.prototype.iconClick_.call(this, e);
     }
-    //this.toggle();
 };
 
 /**
@@ -143,7 +143,8 @@ Blockly.MiniWorkspace.prototype.resizeBubble_ = function() {
         width = workspaceSize.width + workspaceSize.x;
     }
     var height = Math.max(workspaceSize.height + doubleBorderWidth * 3,
-        flyoutMetrics.contentHeight + 20);
+        //flyoutMetrics.contentHeight + 20);
+        20);
     width += doubleBorderWidth * 3;
     // Only resize if the size difference is significant.  Eliminates shuddering.
     if (Math.abs(this.workspaceWidth_ - width) > doubleBorderWidth ||
