@@ -12,8 +12,6 @@ goog.require('Blockly.Icon');
  * @constructor
  */
 Blockly.MiniWorkspace = function() {
-    console.log("here2");
-    console.log(Blockly.MiniWorkspace.superClass_.constructor);
     Blockly.MiniWorkspace.superClass_.constructor.call(this, null);
 };
 goog.inherits(Blockly.MiniWorkspace, Blockly.Icon);
@@ -50,8 +48,12 @@ Blockly.MiniWorkspace.prototype.createIcon = function() {
         {'class': 'blocklyIconMark',
             'x': Blockly.Icon.RADIUS,
             'y': 2 * Blockly.Icon.RADIUS - 4}, this.iconGroup_);
-    this.iconMark_.appendChild(document.createTextNode('\u2699'));
+    this.iconMark_.appendChild(document.createTextNode('\u002b'));
     //this.iconMark_.appendChild(document.createTextNode('\u2605'));
+};
+
+Blockly.MiniWorkspace.prototype.toggle = function() {
+    console.log(this.iconMark_.lastElementChild);
 };
 
 /**
@@ -65,6 +67,7 @@ Blockly.MiniWorkspace.prototype.iconClick_ = function(e) {
     if (this.block_.isEditable()) {
         Blockly.Icon.prototype.iconClick_.call(this, e);
     }
+    //this.toggle();
 };
 
 /**
@@ -85,7 +88,7 @@ Blockly.MiniWorkspace.prototype.createEditor_ = function() {
         null);
     Blockly.createSvgElement('rect',
         {'class': 'blocklyMutatorBackground',
-            'height': '100%', 'width': '100%'}, this.svgDialog_);
+            'height': '80%', 'width': '50%'}, this.svgDialog_);
     var miniworkspace = this;
     this.workspace_ = new Blockly.Workspace(
         function() {return miniworkspace.getFlyoutMetrics_();}, null);
@@ -180,28 +183,28 @@ Blockly.MiniWorkspace.prototype.setVisible = function(visible) {
         this.flyout_.init(this.workspace_, false);
         //this.flyout_.show(this.quarkXml_);
 
-        this.rootBlock_ = this.block_.decompose(this.workspace_);
-        var blocks = this.rootBlock_.getDescendants();
-        for (var i = 0, child; child = blocks[i]; i++) {
-            child.render();
-        }
-        // The root block should not be dragable or deletable.
-        this.rootBlock_.setMovable(false);
-        this.rootBlock_.setDeletable(false);
-        var margin = this.flyout_.CORNER_RADIUS * 2;
-        var x = this.flyout_.width_ + margin;
-        if (Blockly.RTL) {
-            x = -x;
-        }
-        this.rootBlock_.moveBy(x, margin);
-        // Save the initial connections, then listen for further changes.
-        if (this.block_.saveConnections) {
-            this.block_.saveConnections(this.rootBlock_);
-            this.sourceListener_ = Blockly.bindEvent_(
-                this.block_.workspace.getCanvas(),
-                'blocklyWorkspaceChange', this.block_,
-                function() {thisObj.block_.saveConnections(thisObj.rootBlock_)});
-        }
+        //this.rootBlock_ = this.block_.decompose(this.workspace_);
+        //var blocks = this.rootBlock_.getDescendants();
+        //for (var i = 0, child; child = blocks[i]; i++) {
+        //    child.render();
+        //}
+        //// The root block should not be dragable or deletable.
+        //this.rootBlock_.setMovable(false);
+        //this.rootBlock_.setDeletable(false);
+        //var margin = this.flyout_.CORNER_RADIUS * 2;
+        //var x = this.flyout_.width_ + margin;
+        //if (Blockly.RTL) {
+        //    x = -x;
+        //}
+        //this.rootBlock_.moveBy(x, margin);
+        //// Save the initial connections, then listen for further changes.
+        //if (this.block_.saveConnections) {
+        //    this.block_.saveConnections(this.rootBlock_);
+        //    this.sourceListener_ = Blockly.bindEvent_(
+        //        this.block_.workspace.getCanvas(),
+        //        'blocklyWorkspaceChange', this.block_,
+        //        function() {thisObj.block_.saveConnections(thisObj.rootBlock_)});
+        //}
         this.resizeBubble_();
         // When the mutator's workspace changes, update the source block.
         Blockly.bindEvent_(this.workspace_.getCanvas(), 'blocklyWorkspaceChange',

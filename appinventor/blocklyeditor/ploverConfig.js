@@ -87,6 +87,7 @@
     "./src/folder.js",
     "./src/folder_svg.js",
     "./src/mini-workspace.js",
+    "./src/mini-workspaces.js",
 
     //blocks files
     './src/blocks/control.js',

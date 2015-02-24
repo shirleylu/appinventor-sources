@@ -238,6 +238,9 @@ Blockly.Folder.prototype.getIcons = function() {
     if (this.errorIcon) {
         icons.push(this.errorIcon);
     }
+    if (this.miniworkspace) {
+        icons.push(this.miniworkspace);
+    }
     return icons;
 };
 
@@ -1952,7 +1955,7 @@ Blockly.Folder.prototype.setMutator = function(mutator) {
         this.mutator.dispose();
     }
     if (mutator) {
-        mutator.folder_ = this;
+        mutator.block_ = this;
         this.mutator = mutator;
         if (this.svg_) {
             mutator.createIcon();
@@ -1965,12 +1968,11 @@ Blockly.Folder.prototype.setMutator = function(mutator) {
  * @param {Blockly.MiniWorkspace} miniworkspace A mini workspace.
  */
 Blockly.Folder.prototype.setMiniWorkspace = function(miniworkspace) {
-    console.log("here3");
     if (this.miniworkspace && this.miniworkspace !== miniworkspace) {
         this.miniworkspace.dispose();
     }
     if (miniworkspace) {
-        miniworkspace.folder_ = this;
+        miniworkspace.block_ = this;
         this.miniworkspace = miniworkspace;
         if (this.svg_) {
             miniworkspace.createIcon();
