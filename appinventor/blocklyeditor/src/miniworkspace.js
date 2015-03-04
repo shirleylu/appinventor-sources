@@ -2,7 +2,7 @@
 
 goog.provide('Blockly.MiniWorkspace');
 
-goog.require('Blockly.Bubble');
+goog.require('Blockly.MiniBubble');
 goog.require('Blockly.Icon');
 
 
@@ -92,9 +92,9 @@ Blockly.MiniWorkspace.prototype.createEditor_ = function() {
     var miniworkspace = this;
     this.workspace_ = new Blockly.Workspace(
         function() {return miniworkspace.getFlyoutMetrics_();}, null);
-    this.flyout_ = new Blockly.Flyout();
-    this.flyout_.autoClose = false;
-    this.svgDialog_.appendChild(this.flyout_.createDom());
+    //this.flyout_ = new Blockly.Flyout();
+    //this.flyout_.autoClose = false;
+    //this.svgDialog_.appendChild(this.flyout_.createDom());
     this.svgDialog_.appendChild(this.workspace_.createDom());
 
     //when mutator bubble is clicked, do not close mutator
@@ -147,17 +147,17 @@ Blockly.MiniWorkspace.prototype.resizeBubble_ = function() {
         20);
     width += doubleBorderWidth * 3;
     // Only resize if the size difference is significant.  Eliminates shuddering.
-    if (Math.abs(this.workspaceWidth_ - width) > doubleBorderWidth ||
-        Math.abs(this.workspaceHeight_ - height) > doubleBorderWidth) {
-        // Record some layout information for getFlyoutMetrics_.
+    //if (Math.abs(this.workspaceWidth_ - width) > doubleBorderWidth ||
+    //    Math.abs(this.workspaceHeight_ - height) > doubleBorderWidth) {
+    //    // Record some layout information for getFlyoutMetrics_.
         this.workspaceWidth_ = width;
         this.workspaceHeight_ = height;
-        // Resize the bubble.
-        this.bubble_.setBubbleSize(width + doubleBorderWidth,
-            height + doubleBorderWidth);
+    //    // Resize the bubble.
+    //    this.bubble_.setBubbleSize(width + doubleBorderWidth,
+    //        height + doubleBorderWidth);
         this.svgDialog_.setAttribute('width', this.workspaceWidth_);
         this.svgDialog_.setAttribute('height', this.workspaceHeight_);
-    }
+    //}
 
     if (Blockly.RTL) {
         // Scroll the workspace to always left-align.
@@ -177,11 +177,11 @@ Blockly.MiniWorkspace.prototype.setVisible = function(visible) {
     }
     if (visible) {
         // Create the bubble.
-        this.bubble_ = new Blockly.Bubble(this.block_.workspace,
+        this.bubble_ = new Blockly.MiniBubble(this.block_.workspace,
             this.createEditor_(), this.block_.svg_.svgPath_,
             this.iconX_, this.iconY_, null, null);
         var thisObj = this;
-        this.flyout_.init(this.workspace_, false);
+        //this.flyout_.init(this.workspace_, false);
         //this.flyout_.show(this.quarkXml_);
 
         //this.rootBlock_ = this.block_.decompose(this.workspace_);
@@ -206,16 +206,17 @@ Blockly.MiniWorkspace.prototype.setVisible = function(visible) {
         //        'blocklyWorkspaceChange', this.block_,
         //        function() {thisObj.block_.saveConnections(thisObj.rootBlock_)});
         //}
-        this.resizeBubble_();
+        //this.resizeBubble_();
         // When the mutator's workspace changes, update the source block.
         Blockly.bindEvent_(this.workspace_.getCanvas(), 'blocklyWorkspaceChange',
             this.block_, function() {thisObj.workspaceChanged_();});
         this.updateColour();
+        this.bubble_.positionBubble_();
     } else {
         // Dispose of the bubble.
         this.svgDialog_ = null;
-        this.flyout_.dispose();
-        this.flyout_ = null;
+        //this.flyout_.dispose();
+        //this.flyout_ = null;
         this.workspace_.dispose();
         this.workspace_ = null;
         this.rootBlock_ = null;
@@ -257,21 +258,21 @@ Blockly.MiniWorkspace.prototype.workspaceChanged_ = function() {
     }
 
     // When the mutator's workspace changes, update the source block.
-    if (this.rootBlock_.workspace == this.workspace_) {
-        // Switch off rendering while the source block is rebuilt.
-        var savedRendered = this.block_.rendered;
-        this.block_.rendered = false;
-        // Allow the source block to rebuild itself.
-        this.block_.compose(this.rootBlock_);
-        // Restore rendering and show the changes.
-        this.block_.rendered = savedRendered;
-        if (this.block_.rendered) {
-            this.block_.render();
-        }
-        this.resizeBubble_();
-        // The source block may have changed, notify its workspace.
-        this.block_.workspace.fireChangeEvent();
-    }
+    //if (this.rootBlock_.workspace == this.workspace_) {
+    //    // Switch off rendering while the source block is rebuilt.
+    //    var savedRendered = this.block_.rendered;
+    //    this.block_.rendered = false;
+    //    // Allow the source block to rebuild itself.
+    //    this.block_.compose(this.rootBlock_);
+    //    // Restore rendering and show the changes.
+    //    this.block_.rendered = savedRendered;
+    //    if (this.block_.rendered) {
+    //        this.block_.render();
+    //    }
+    //    //this.resizeBubble_();
+    //    // The source block may have changed, notify its workspace.
+    //    this.block_.workspace.fireChangeEvent();
+    //}
 };
 
 /**
