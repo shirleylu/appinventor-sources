@@ -47,41 +47,7 @@ goog.require('goog.string');
 
 Blockly.FOLDER_CATEGORY_HUE = [241, 213, 146];
 
-/**
- * Unique ID counter for created blocks.
- * @private
- */
-Blockly.uidCounter_ = 0;
-
-/**
- * Get the Blockly.uidCounter_
- * @return {number}
- */
-Blockly.getUidCounter = function() {
-    return Blockly.uidCounter_;
-};
-
-/**
- * Set the Blockly.uidCounter_
- * @param {number} val The value to set the counter to.
- */
-Blockly.setUidCounter = function(val) {
-    Blockly.uidCounter_ = val;
-};
-
-/**
- * Generate a unique id.  This will be locally or globally unique, depending on
- * whether we are in single user or realtime collaborative mode.
- * @return {string}
- */
-Blockly.genUid = function() {
-    var uid = (++Blockly.uidCounter_).toString();
-    if (Blockly.Realtime.isEnabled()) {
-        return Blockly.Realtime.genUid(uid);
-    } else {
-        return uid;
-    }
-};
+Blockly.ALL_FOLDERS = [];
 
 /**
  * Class for one block.
@@ -119,7 +85,10 @@ Blockly.Folder.obtain = function(workspace, prototypeName) {
  */
 Blockly.Folder.prototype.initialize = function(workspace, prototypeName) {
     this.id = Blockly.genUid();
-    workspace.addTopBlock(this);
+    if (workspace != Blockly.mainWorkspace)
+        workspace.addTopBlock(this);
+    else
+        Blockly.ALL_FOLDERS.push(this);
     this.fill(workspace, prototypeName);
     // Bind an onchange function, if it exists.
     if (goog.isFunction(this.onchange)) {
@@ -350,6 +319,17 @@ Blockly.Folder.prototype.unselect = function() {
     Blockly.fireUiEvent(this.workspace.getCanvas(), 'blocklySelectChange');
 };
 
+Blockly.Folder.prototype.removeFromAllFolders = function(folder) {
+    var found = false;
+    for (var f, x = 0; f = Blockly.ALL_FOLDERS[x]; x++) {
+        if (f == folder) {
+            Blockly.ALL_FOLDERS.splice(x, 1);
+            found = true;
+            break;
+        }
+    }
+};
+
 /**
  * Dispose of this block.
  * @param {boolean} healStack If true, then try to heal any gap by connecting
@@ -372,7 +352,10 @@ Blockly.Folder.prototype.dispose = function(healStack, animate,
     // This block is now at the top of the workspace.
     // Remove this block from the workspace's list of top-most blocks.
     if (this.workspace && !dontRemoveFromWorkspace) {
-        this.workspace.removeTopBlock(this);
+        if (this.workspace != Blockly.mainWorkspace)
+            this.workspace.removeTopBlock(this);
+        else
+            this.removeFromAllFolders(this);
         this.workspace = null;
     }
 
@@ -1104,13 +1087,7 @@ Blockly.Folder.prototype.getNextBlock = function() {
  * @return {!Blockly.Folder} The root block.
  */
 Blockly.Folder.prototype.getRootBlock = function() {
-    var rootBlock;
-    var block = this;
-    do {
-        rootBlock = block;
-        block = rootBlock.parentBlock_;
-    } while (block);
-    return rootBlock;
+    return this;
 };
 
 /**
@@ -1128,55 +1105,7 @@ Blockly.Folder.prototype.getChildren = function() {
  * @param {Blockly.Folder} newParent New parent block.
  */
 Blockly.Folder.prototype.setParent = function(newParent) {
-    if (this.parentBlock_) {
-        // Remove this block from the old parent's child list.
-        var children = this.parentBlock_.childBlocks_;
-        for (var child, x = 0; child = children[x]; x++) {
-            if (child == this) {
-                children.splice(x, 1);
-                break;
-            }
-        }
-        // Move this block up the DOM.  Keep track of x/y translations.
-        var xy = this.getRelativeToSurfaceXY();
-        this.workspace.getCanvas().appendChild(this.svg_.getRootElement());
-        this.svg_.getRootElement().setAttribute('transform',
-            'translate(' + xy.x + ', ' + xy.y + ')');
-
-        // Disconnect from superior blocks.
-        this.parentBlock_ = null;
-        if (this.previousConnection && this.previousConnection.targetConnection) {
-            this.previousConnection.disconnect();
-        }
-        if (this.outputConnection && this.outputConnection.targetConnection) {
-            this.outputConnection.disconnect();
-        }
-        // This block hasn't actually moved on-screen, so there's no need to update
-        // its connection locations.
-    } else {
-        // Remove this block from the workspace's list of top-most blocks.
-        // Note that during realtime sync we sometimes create child blocks that are
-        // not top level so we check first before removing.
-        if (goog.array.contains(this.workspace.getTopBlocks(false), this)) {
-            this.workspace.removeTopBlock(this);
-        }
-    }
-
-    this.parentBlock_ = newParent;
-    if (newParent) {
-        // Add this block to the new parent's child list.
-        newParent.childBlocks_.push(this);
-
-        var oldXY = this.getRelativeToSurfaceXY();
-        if (newParent.svg_ && this.svg_) {
-            newParent.svg_.getRootElement().appendChild(this.svg_.getRootElement());
-        }
-        var newXY = this.getRelativeToSurfaceXY();
-        // Move the connections to match the child's new position.
-        this.moveConnections_(newXY.x - oldXY.x, newXY.y - oldXY.y);
-    } else {
-        this.workspace.addTopBlock(this);
-    }
+    this.parentBlock_ = null;
 };
 
 /**
@@ -1187,11 +1116,7 @@ Blockly.Folder.prototype.setParent = function(newParent) {
  * @return {!Array.<!Blockly.Folder>} Flattened array of blocks.
  */
 Blockly.Folder.prototype.getDescendants = function() {
-    var blocks = [this];
-    for (var child, x = 0; child = this.childBlocks_[x]; x++) {
-        blocks.push.apply(blocks, child.getDescendants());
-    }
-    return blocks;
+    return [this];
 };
 
 /**

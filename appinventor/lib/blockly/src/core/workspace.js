@@ -200,7 +200,7 @@ Blockly.Workspace.prototype.getBubbleCanvas = function() {
 Blockly.Workspace.prototype.addTopBlock = function(block) {
   if (block.workspace == Blockly.mainWorkspace) //Do not reset arrangements for the flyout
     Blockly.resetWorkspaceArrangements();
-  this.topBlocks_.push(block);
+    this.topBlocks_.push(block);
   if (Blockly.Realtime.isEnabled() && this == Blockly.mainWorkspace) {
     Blockly.Realtime.addTopBlock(block);
   }
