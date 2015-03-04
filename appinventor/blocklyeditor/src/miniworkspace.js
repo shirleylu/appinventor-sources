@@ -5,14 +5,33 @@ goog.provide('Blockly.MiniWorkspace');
 goog.require('Blockly.MiniBubble');
 goog.require('Blockly.Icon');
 
+// TODO(scr): Fix circular dependencies
+// goog.require('Blockly.Block');
+goog.require('Blockly.ScrollbarPair');
+goog.require('Blockly.Trashcan');
+goog.require('Blockly.Xml');
 
 /**
  * Class for a mini workspace. 
  * @extends {Blockly.Icon}
  * @constructor
  */
-Blockly.MiniWorkspace = function() {
-    Blockly.MiniWorkspace.superClass_.constructor.call(this, null);
+Blockly.MiniWorkspace = function(getMetrics, setMetrics) {
+  this.getMetrics = getMetrics;
+  this.setMetrics = setMetrics;
+
+  /** @type {boolean} */
+  this.isFlyout = false;
+  /**
+   * @type {!Array.<!Blockly.Block>}
+   * @private
+   */
+    this.topBlocks_ = [];
+
+  /** @type {number} */
+  this.maxBlocks = Infinity;
+
+  Blockly.ConnectionDB.init(this);
 };
 goog.inherits(Blockly.MiniWorkspace, Blockly.Icon);
 
@@ -53,6 +72,7 @@ Blockly.MiniWorkspace.prototype.createIcon = function() {
 };
 
 Blockly.MiniWorkspace.prototype.toggleIcon = function() {
+    this.block_.expandedFolder_ = !this.block_.expandedFolder_;
     this.iconMark_.innerHTML = (this.iconMark_.innerHTML == "+" ? "-" : "+");
 };
 
@@ -304,4 +324,88 @@ Blockly.MiniWorkspace.prototype.getFlyoutMetrics_ = function() {
 Blockly.MiniWorkspace.prototype.dispose = function() {
     this.block_.miniworkspace = null;
     Blockly.Icon.prototype.dispose.call(this);
+};
+
+/**
+ * Add a block to the list of top blocks.
+ * @param {!Blockly.Block} block Block to remove.
+ */
+Blockly.MiniWorkspace.prototype.addTopBlock = function(block) {
+    if (block.workspace == Blockly.mainWorkspace) //Do not reset arrangements for the flyout
+        Blockly.resetWorkspaceArrangements();
+    this.topBlocks_.push(block);
+    if (Blockly.Realtime.isEnabled() && this == Blockly.mainWorkspace) {
+        Blockly.Realtime.addTopBlock(block);
+    }
+    this.fireChangeEvent();
+};
+
+/**
+ * Remove a block from the list of top blocks.
+ * @param {!Blockly.Block} block Block to remove.
+ */
+Blockly.MiniWorkspace.prototype.removeTopBlock = function(block) {
+    if (block.workspace == Blockly.mainWorkspace) //Do not reset arrangements for the flyout
+        Blockly.resetWorkspaceArrangements();
+    var found = false;
+    for (var child, x = 0; child = this.topBlocks_[x]; x++) {
+        if (child == block) {
+            this.topBlocks_.splice(x, 1);
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        throw 'Block not present in workspace\'s list of top-most blocks.';
+    }
+    if (Blockly.Realtime.isEnabled() && this == Blockly.mainWorkspace) {
+        Blockly.Realtime.removeTopBlock(block);
+    }
+    this.fireChangeEvent();
+};
+
+/**
+ * Fire a change event for this workspace.  Changes include new block, dropdown
+ * edits, mutations, connections, etc.  Groups of simultaneous changes (e.g.
+ * a tree of blocks being deleted) are merged into one event.
+ * Applications may hook workspace changes by listening for
+ * 'blocklyWorkspaceChange' on Blockly.mainWorkspace.getCanvas().
+ */
+Blockly.MiniWorkspace.prototype.fireChangeEvent = function() {
+    if (this.fireChangeEventPid_) {
+        window.clearTimeout(this.fireChangeEventPid_);
+    }
+    var canvas = this.svgBlockCanvas_;
+    if (canvas) {
+        this.fireChangeEventPid_ = window.setTimeout(function() {
+            Blockly.fireUiEvent(canvas, 'blocklyWorkspaceChange');
+        }, 0);
+    }
+};
+
+/**
+ * Get the SVG element that forms the drawing surface.
+ * @return {!Element} SVG element.
+ */
+Blockly.Workspace.prototype.getCanvas = function() {
+    return this.svgBlockCanvas_;
+};
+
+/**
+ * Create the trash can elements.
+ * @return {!Element} The workspace's SVG group.
+ */
+Blockly.Workspace.prototype.createDom = function() {
+    /*
+     <g>
+     [Trashcan may go here]
+     <g></g>
+     <g></g>
+     </g>
+     */
+    this.svgGroup_ = Blockly.createSvgElement('g', {}, null);
+    this.svgBlockCanvas_ = Blockly.createSvgElement('g', {}, this.svgGroup_);
+    this.svgBubbleCanvas_ = Blockly.createSvgElement('g', {}, this.svgGroup_);
+    this.fireChangeEvent();
+    return this.svgGroup_;
 };
