@@ -2,7 +2,9 @@
 
 goog.provide('Blockly.MiniWorkspace');
 
-goog.require('Blockly.Workspace');
+goog.require('Blockly.MiniBubble');
+goog.require('Blockly.Icon');
+
 
 /**
  * Class for a mini workspace. 
@@ -10,10 +12,7 @@ goog.require('Blockly.Workspace');
  * @constructor
  */
 Blockly.MiniWorkspace = function() {
-  this.isFlyout = false;
-  this.topBlocks_ = [];
-  this.bubble_ = null;
-  this.maxBlocks = Infinity;
+    Blockly.MiniWorkspace.superClass_.constructor.call(this, null);
 };
 goog.inherits(Blockly.MiniWorkspace, Blockly.Icon);
 
@@ -41,7 +40,6 @@ Blockly.MiniWorkspace.prototype.createIcon = function() {
 };
 
 Blockly.MiniWorkspace.prototype.toggleIcon = function() {
-    this.block_.expandedFolder_ = !this.block_.expandedFolder_;
     this.iconMark_.innerHTML = (this.iconMark_.innerHTML == "+" ? "-" : "+");
 };
 
@@ -147,4 +145,52 @@ Blockly.MiniWorkspace.prototype.workspaceChanged_ = function() {
             }
         }
     }
-}
+
+    // When the mutator's workspace changes, update the source block.
+    //if (this.rootBlock_.workspace == this.workspace_) {
+    //    // Switch off rendering while the source block is rebuilt.
+    //    var savedRendered = this.block_.rendered;
+    //    this.block_.rendered = false;
+    //    // Allow the source block to rebuild itself.
+    //    this.block_.compose(this.rootBlock_);
+    //    // Restore rendering and show the changes.
+    //    this.block_.rendered = savedRendered;
+    //    if (this.block_.rendered) {
+    //        this.block_.render();
+    //    }
+    //    //this.resizeBubble_();
+    //    // The source block may have changed, notify its workspace.
+    //    this.block_.workspace.fireChangeEvent();
+    //}
+};
+
+/**
+ * Return an object with all the metrics required to size scrollbars for the
+ * mutator flyout.  The following properties are computed:
+ * .viewHeight: Height of the visible rectangle,
+ * .absoluteTop: Top-edge of view.
+ * .absoluteLeft: Left-edge of view.
+ * @return {!Object} Contains size and position metrics of mutator dialog's
+ *     workspace.
+ * @private
+ */
+Blockly.MiniWorkspace.prototype.getFlyoutMetrics_ = function() {
+    var left = 0;
+    if (Blockly.RTL) {
+        left += this.workspaceWidth_;
+    }
+    return {
+        viewHeight: this.workspaceHeight_,
+        viewWidth: 0,  // This seem wrong, but results in correct RTL layout.
+        absoluteTop: 0,
+        absoluteLeft: left
+    };
+};
+
+/**
+ * Dispose of this mutator.
+ */
+Blockly.MiniWorkspace.prototype.dispose = function() {
+    this.block_.miniworkspace = null;
+    Blockly.Icon.prototype.dispose.call(this);
+};
