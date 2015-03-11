@@ -83,6 +83,46 @@ Blockly.MiniBubble = function(workspace, content, shape,
         }
     }
 };
+//
+///**
+// * Width of the border around the bubble.
+// */
+//Blockly.Bubble.BORDER_WIDTH = 6;
+//
+///**
+// * Determines the thickness of the base of the arrow in relation to the size
+// * of the bubble.  Higher numbers result in thinner arrows.
+// */
+//Blockly.Bubble.ARROW_THICKNESS = 10;
+//
+///**
+// * The number of degrees that the arrow bends counter-clockwise.
+// */
+//Blockly.MiniBubble.ARROW_ANGLE = 20;
+//
+///**
+// * The sharpness of the arrow's bend.  Higher numbers result in smoother arrows.
+// */
+//Blockly.Bubble.ARROW_BEND = 4;
+//
+///**
+// * Distance between arrow point and anchor point.
+// */
+//Blockly.Bubble.ANCHOR_RADIUS = 8;
+//
+///**
+// * Wrapper function called when a mouseUp occurs during a drag operation.
+// * @type {Array.<!Array>}
+// * @private
+// */
+//Blockly.Bubble.onMouseUpWrapper_ = null;
+//
+///**
+// * Wrapper function called when a mouseMove occurs during a drag operation.
+// * @type {Array.<!Array>}
+// * @private
+// */
+//Blockly.Bubble.onMouseMoveWrapper_ = null;
 
 /**
  * Stop binding to the global mouseup and mousemove events.
