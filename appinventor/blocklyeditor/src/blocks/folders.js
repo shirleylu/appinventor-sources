@@ -11,6 +11,7 @@ Blockly.Blocks['folder'] = {
             //.appendField(new Blockly.FieldTextBlockInput('FOLDER NAME'), 'TEXT');
         //this.setMutator(new Blockly.Mutator(['procedures_mutatorarg']));
         this.setMiniWorkspace(new Blockly.MiniWorkspace());
+        this.setTooltip("Folder Tooltip");
     },
     decompose: function(workspace){
         return Blockly.decompose(workspace,'folder',this);
