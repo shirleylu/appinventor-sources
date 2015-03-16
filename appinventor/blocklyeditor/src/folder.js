@@ -89,6 +89,7 @@ Blockly.Folder.obtain = function(workspace, prototypeName) {
 Blockly.Folder.prototype.initialize = function(workspace, prototypeName) {
     this.id = Blockly.genUid();
     workspace.addTopBlock(this);
+    Blockly.ALL_FOLDERS.push(this);
     this.fill(workspace, prototypeName);
     // Bind an onchange function, if it exists.
     if (goog.isFunction(this.onchange)) {
