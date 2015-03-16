@@ -47,41 +47,7 @@ goog.require('goog.string');
 
 Blockly.FOLDER_CATEGORY_HUE = [241, 213, 146];
 
-/**
- * Unique ID counter for created blocks.
- * @private
- */
-Blockly.uidCounter_ = 0;
-
-/**
- * Get the Blockly.uidCounter_
- * @return {number}
- */
-Blockly.getUidCounter = function() {
-    return Blockly.uidCounter_;
-};
-
-/**
- * Set the Blockly.uidCounter_
- * @param {number} val The value to set the counter to.
- */
-Blockly.setUidCounter = function(val) {
-    Blockly.uidCounter_ = val;
-};
-
-/**
- * Generate a unique id.  This will be locally or globally unique, depending on
- * whether we are in single user or realtime collaborative mode.
- * @return {string}
- */
-Blockly.genUid = function() {
-    var uid = (++Blockly.uidCounter_).toString();
-    if (Blockly.Realtime.isEnabled()) {
-        return Blockly.Realtime.genUid(uid);
-    } else {
-        return uid;
-    }
-};
+Blockly.ALL_FOLDERS = [];
 
 /**
  * Class for one block.
@@ -151,6 +117,8 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
     this.editable_ = true;
     this.collapsed_ = false;
 
+    this.miniworkspace = null;
+    this.expandedFolder_ = false;
     this.workspace = workspace;
     this.isInFlyout = workspace.isFlyout;
     // This is missing from our latest version
@@ -348,6 +316,17 @@ Blockly.Folder.prototype.unselect = function() {
     Blockly.selected = null;
     this.svg_.removeSelect();
     Blockly.fireUiEvent(this.workspace.getCanvas(), 'blocklySelectChange');
+};
+
+Blockly.Folder.prototype.removeFromAllFolders = function(folder) {
+    var found = false;
+    for (var f, x = 0; f = Blockly.ALL_FOLDERS[x]; x++) {
+        if (f == folder) {
+            Blockly.ALL_FOLDERS.splice(x, 1);
+            found = true;
+            break;
+        }
+    }
 };
 
 /**
@@ -641,25 +620,7 @@ Blockly.Folder.prototype.onMouseUp_ = function(e) {
     Blockly.resetWorkspaceArrangements();
     Blockly.doCommand(function() {
         Blockly.Folder.terminateDrag_();
-        if (Blockly.selected && Blockly.highlightedConnection_) {
-            // Connect two blocks together.
-            Blockly.localConnection_.connect(Blockly.highlightedConnection_);
-            if (this_.svg_) {
-                // Trigger a connection animation.
-                // Determine which connection is inferior (lower in the source stack).
-                var inferiorConnection;
-                if (Blockly.localConnection_.isSuperior()) {
-                    inferiorConnection = Blockly.highlightedConnection_;
-                } else {
-                    inferiorConnection = Blockly.localConnection_;
-                }
-                inferiorConnection.sourceBlock_.svg_.connectionUiEffect();
-            }
-            if (this_.workspace.trashcan && this_.workspace.trashcan.isOpen) {
-                // Don't throw an object in the trash can if it just got connected.
-                this_.workspace.trashcan.close();
-            }
-        } else if (this_.workspace.trashcan && this_.workspace.trashcan.isOpen) {
+        if (this_.workspace.trashcan && this_.workspace.trashcan.isOpen) {
             var trashcan = this_.workspace.trashcan;
             goog.Timer.callOnce(trashcan.close, 100, trashcan);
             if (Blockly.selected.confirmDeletion()) {
@@ -669,6 +630,17 @@ Blockly.Folder.prototype.onMouseUp_ = function(e) {
             // resize to contain the newly positioned block.  Force a second resize
             // now that the block has been deleted.
             Blockly.fireUiEvent(window, 'resize');
+        } else if (Blockly.ALL_FOLDERS.length > 0) {
+            for (var i=0; i<Blockly.ALL_FOLDERS.length; i++) {
+                var folder = Blockly.ALL_FOLDERS[i];
+                if (folder != this) {
+                    if (folder.isOverFolder(e) && !this.isInFolder) {
+                        folder.upOverFolder(e, this, true);
+                    } else if (!folder.isOverFolder(e) && this.isInFolder) {
+                        folder.upOverFolder(e, this, false);
+                    }
+                }
+            }
         }
         if (Blockly.highlightedConnection_) {
             Blockly.highlightedConnection_.unhighlight();
@@ -1104,13 +1076,7 @@ Blockly.Folder.prototype.getNextBlock = function() {
  * @return {!Blockly.Folder} The root block.
  */
 Blockly.Folder.prototype.getRootBlock = function() {
-    var rootBlock;
-    var block = this;
-    do {
-        rootBlock = block;
-        block = rootBlock.parentBlock_;
-    } while (block);
-    return rootBlock;
+    return this;
 };
 
 /**
@@ -1128,55 +1094,7 @@ Blockly.Folder.prototype.getChildren = function() {
  * @param {Blockly.Folder} newParent New parent block.
  */
 Blockly.Folder.prototype.setParent = function(newParent) {
-    if (this.parentBlock_) {
-        // Remove this block from the old parent's child list.
-        var children = this.parentBlock_.childBlocks_;
-        for (var child, x = 0; child = children[x]; x++) {
-            if (child == this) {
-                children.splice(x, 1);
-                break;
-            }
-        }
-        // Move this block up the DOM.  Keep track of x/y translations.
-        var xy = this.getRelativeToSurfaceXY();
-        this.workspace.getCanvas().appendChild(this.svg_.getRootElement());
-        this.svg_.getRootElement().setAttribute('transform',
-            'translate(' + xy.x + ', ' + xy.y + ')');
-
-        // Disconnect from superior blocks.
-        this.parentBlock_ = null;
-        if (this.previousConnection && this.previousConnection.targetConnection) {
-            this.previousConnection.disconnect();
-        }
-        if (this.outputConnection && this.outputConnection.targetConnection) {
-            this.outputConnection.disconnect();
-        }
-        // This block hasn't actually moved on-screen, so there's no need to update
-        // its connection locations.
-    } else {
-        // Remove this block from the workspace's list of top-most blocks.
-        // Note that during realtime sync we sometimes create child blocks that are
-        // not top level so we check first before removing.
-        if (goog.array.contains(this.workspace.getTopBlocks(false), this)) {
-            this.workspace.removeTopBlock(this);
-        }
-    }
-
-    this.parentBlock_ = newParent;
-    if (newParent) {
-        // Add this block to the new parent's child list.
-        newParent.childBlocks_.push(this);
-
-        var oldXY = this.getRelativeToSurfaceXY();
-        if (newParent.svg_ && this.svg_) {
-            newParent.svg_.getRootElement().appendChild(this.svg_.getRootElement());
-        }
-        var newXY = this.getRelativeToSurfaceXY();
-        // Move the connections to match the child's new position.
-        this.moveConnections_(newXY.x - oldXY.x, newXY.y - oldXY.y);
-    } else {
-        this.workspace.addTopBlock(this);
-    }
+    this.parentBlock_ = null;
 };
 
 /**
@@ -1187,11 +1105,7 @@ Blockly.Folder.prototype.setParent = function(newParent) {
  * @return {!Array.<!Blockly.Folder>} Flattened array of blocks.
  */
 Blockly.Folder.prototype.getDescendants = function() {
-    var blocks = [this];
-    for (var child, x = 0; child = this.childBlocks_[x]; x++) {
-        blocks.push.apply(blocks, child.getDescendants());
-    }
-    return blocks;
+    return [this];
 };
 
 /**
@@ -2121,3 +2035,47 @@ Blockly.Folder.prototype.renderDown = function() {
     // [lyn, 04/08/14] Because renderDown is recursive, doesn't make sense to track its time here.
 };
 
+Blockly.Folder.prototype.isOverFolder = function(e) {
+    if (this.expandedFolder_){
+        var mouseXY = Blockly.mouseToSvg(e);
+        var folderXY = Blockly.getSvgXY_(this.miniworkspace.bubble_.bubbleGroup_);
+        var width = this.miniworkspace.bubble_.width;
+        var height = this.miniworkspace.bubble_.height;
+        var over = (mouseXY.x > folderXY.x) &&
+            (mouseXY.x < folderXY.x + width) &&
+            (mouseXY.y > folderXY.y) &&
+            (mouseXY.y < folderXY.y + height);
+        return over;
+    } else {
+        return false;
+    }
+}
+
+Blockly.Folder.prototype.addToFolder = function(block) {
+    var dom = Blockly.Xml.blockToDom_(block);
+    var bl = Blockly.Xml.domToBlock(this.miniworkspace, dom);
+    bl.isInFolder = true;
+    block.dispose();
+}
+
+Blockly.Folder.prototype.removeFromFolder = function(block) {
+    block.isInFolder = false;
+}
+
+Blockly.Folder.prototype.upOverFolder = function(e, block, inFolder) {
+    if (!inFolder) {
+        this.addToFolder(block);
+    } else {
+        this.removeFromFolder(block);
+    }
+}
+
+
+/**
+ * Return the top-most block in this block's tree.
+ * This will return itself if this block is at the top level.
+ * @return {!Blockly.Block} The root block.
+ */
+Blockly.Folder.prototype.getRootBlock = function() {
+    return this;
+};
