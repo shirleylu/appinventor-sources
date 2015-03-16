@@ -70,9 +70,9 @@ Blockly.MiniWorkspace.prototype.renderIcon = function(cursorX) {
         'translate(' + cursorX + ', ' + TOP_MARGIN + ')');
     this.computeIconLocation();
     if (Blockly.RTL) {
-        cursorX -= Blockly.FolderSvg.SEP_SPACE_X;
+        cursorX -= Blockly.BlockSvg.SEP_SPACE_X;
     } else {
-        cursorX += diameter + Blockly.FolderSvg.SEP_SPACE_X;
+        cursorX += diameter + Blockly.BlockSvg.SEP_SPACE_X;
     }
     return cursorX;
 };
