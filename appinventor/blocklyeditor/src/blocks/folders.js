@@ -10,7 +10,7 @@ Blockly.Blocks['folder'] = {
             .appendField("folder");
             //.appendField(new Blockly.FieldTextBlockInput('FOLDER NAME'), 'TEXT');
         //this.setMutator(new Blockly.Mutator(['procedures_mutatorarg']));
-        this.setMiniWorkspace(new Blockly.MiniWorkspace());
+        //this.setMiniWorkspace(new Blockly.MiniWorkspace());
     },
     decompose: function(workspace){
         return Blockly.decompose(workspace,'folder',this);
