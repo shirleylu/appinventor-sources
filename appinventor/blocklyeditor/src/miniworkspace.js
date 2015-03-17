@@ -78,6 +78,7 @@ Blockly.MiniWorkspace.prototype.renderIcon = function(cursorX) {
 };
 
 Blockly.MiniWorkspace.prototype.toggleIcon = function() {
+    this.block_.expandedFolder_ = !this.block_.expandedFolder_;
     this.iconMark_.innerHTML = (this.iconMark_.innerHTML == "+" ? "-" : "+");
 };
 
@@ -288,8 +289,8 @@ Blockly.MiniWorkspace.prototype.workspaceChanged_ = function() {
             var blockXY = block.getRelativeToSurfaceXY();
             var blockHW = block.getHeightWidth();
             if (block.isDeletable() && (Blockly.RTL ?
-                blockXY.x > -this.flyout_.width_ + MARGIN :
-                blockXY.x < this.flyout_.width_ - MARGIN)) {
+                blockXY.x > -this.bubble_.width_ + MARGIN :
+                blockXY.x < this.bubble_.width_ - MARGIN)) {
                 // Delete any block that's sitting on top of the flyout.
                 block.dispose(false, true);
             } else if (blockXY.y + blockHW.height < MARGIN) {
@@ -346,4 +347,44 @@ Blockly.MiniWorkspace.prototype.getFlyoutMetrics_ = function() {
 Blockly.MiniWorkspace.prototype.dispose = function() {
     this.block_.miniworkspace = null;
     Blockly.Icon.prototype.dispose.call(this);
+};
+
+/**
+ * Returns the center of the block's icon relative to the surface.
+ * @return {!Object} Object with x and y properties.
+ */
+Blockly.MiniWorkspace.prototype.getIconLocation = function() {
+    return {x: this.iconX_, y: this.iconY_};
+};
+
+/**
+ * Change the colour of the associated bubble to match its block.
+ */
+Blockly.MiniWorkspace.prototype.updateColour = function() {
+    if (this.isVisible()) {
+        var hexColour = Blockly.makeColour(this.block_.getColour());
+        this.bubble_.setColour(hexColour);
+    }
+};
+
+/**
+ * Add a block to the list of top blocks.
+ * @param {!Blockly.Block} block Block to remove.
+ */
+Blockly.MiniWorkspace.prototype.addTopBlock = function(block) {
+    block.workspace == this.workspace_;
+    block.isInFolder = true;
+    this.workspace_.topBlocks_.push(block);
+    if (Blockly.Realtime.isEnabled() && this == Blockly.mainWorkspace) {
+        Blockly.Realtime.addTopBlock(block);
+    }
+    this.workspace_.fireChangeEvent();
+};
+
+/**
+ * Get the SVG element that forms the drawing surface.
+ * @return {!Element} SVG element.
+ */
+Blockly.MiniWorkspace.prototype.getCanvas = function() {
+    return this.bubble_.bubbleGroup_;
 };

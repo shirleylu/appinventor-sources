@@ -234,77 +234,6 @@ Blockly.Folder.prototype.removeFromAllFolders = function(folder) {
 };
 
 /**
- * Handle a mouse-up anywhere in the SVG pane.  Is only registered when a
- * block is clicked.  We can't use mouseUp on the block since a fast-moving
- * cursor can briefly escape the block before it catches up.
- * @param {!Event} e Mouse up event.
- * @private
- */
-Blockly.Folder.prototype.onMouseUp_ = function(e) {
-    var start = new Date().getTime();
-    Blockly.Instrument.initializeStats("onMouseUp");
-    var this_ = this;
-    Blockly.resetWorkspaceArrangements();
-    Blockly.doCommand(function() {
-    Blockly.terminateDrag_();
-    if (Blockly.selected && Blockly.highlightedConnection_) {
-      // Connect two blocks together.
-      Blockly.localConnection_.connect(Blockly.highlightedConnection_);
-      if (this_.svg_) {
-        // Trigger a connection animation.
-        // Determine which connection is inferior (lower in the source stack).
-        var inferiorConnection;
-        if (Blockly.localConnection_.isSuperior()) {
-          inferiorConnection = Blockly.highlightedConnection_;
-        } else {
-          inferiorConnection = Blockly.localConnection_;
-        }
-        inferiorConnection.sourceBlock_.svg_.connectionUiEffect();
-      }
-      if (this_.workspace.trashcan && this_.workspace.trashcan.isOpen) {
-        // Don't throw an object in the trash can if it just got connected.
-        this_.workspace.trashcan.close();
-      }
-    } else if (this_.workspace.trashcan && this_.workspace.trashcan.isOpen) {
-      var trashcan = this_.workspace.trashcan;
-      goog.Timer.callOnce(trashcan.close, 100, trashcan);
-      if (Blockly.selected.confirmDeletion()) {
-        Blockly.selected.dispose(false, true);
-      }
-      // Dropping a block on the trash can will usually cause the workspace to
-      // resize to contain the newly positioned block.  Force a second resize
-      // now that the block has been deleted.
-      Blockly.fireUiEvent(window, 'resize');
-    } else if (Blockly.ALL_FOLDERS.length > 0) {
-        for (var i = 0; i < Blockly.ALL_FOLDERS.length; i++) {
-            var folder = Blockly.ALL_FOLDERS[i];
-            if (folder != this) {
-                if (folder.isOverFolder(e) && !this.isInFolder) {
-                    folder.upOverFolder(e, this, true);
-                } else if (!folder.isOverFolder(e) && this.isInFolder) {
-                    folder.upOverFolder(e, this, false);
-                }
-            }
-        }
-    }
-        if (Blockly.highlightedConnection_) {
-            Blockly.highlightedConnection_.unhighlight();
-            Blockly.highlightedConnection_ = null;
-        }
-    });
-    if (! Blockly.Instrument.avoidRenderWorkspaceInMouseUp) {
-        // [lyn, 04/01/14] rendering a workspace takes a *long* time and is *not* necessary!
-        // This is the key source of the laggy drag problem. Remove it!
-        Blockly.mainWorkspace.render();
-    }
-    Blockly.WarningHandler.checkAllBlocksForWarningsAndErrors();
-    var stop = new Date().getTime();
-    var timeDiff = stop - start;
-    Blockly.Instrument.stats.totalTime = timeDiff;
-    Blockly.Instrument.displayStats("onMouseUp");
-};
-
-/**
  * Give this block a mini workspace.
  * @param {Blockly.MiniWorkspace} miniworkspace A mini workspace.
  */
@@ -325,8 +254,8 @@ Blockly.Folder.prototype.isOverFolder = function(e) {
     if (this.expandedFolder_){
         var mouseXY = Blockly.mouseToSvg(e);
         var folderXY = Blockly.getSvgXY_(this.miniworkspace.bubble_.bubbleGroup_);
-        var width = this.miniworkspace.bubble_.width;
-        var height = this.miniworkspace.bubble_.height;
+        var width = this.miniworkspace.bubble_.width_;
+        var height = this.miniworkspace.bubble_.height_;
         var over = (mouseXY.x > folderXY.x) &&
             (mouseXY.x < folderXY.x + width) &&
             (mouseXY.y > folderXY.y) &&
@@ -335,18 +264,19 @@ Blockly.Folder.prototype.isOverFolder = function(e) {
     } else {
         return false;
     }
-}
+};
 
 Blockly.Folder.prototype.addToFolder = function(block) {
+    console.log(block);
     var dom = Blockly.Xml.blockToDom_(block);
     var bl = Blockly.Xml.domToBlock(this.miniworkspace, dom);
     bl.isInFolder = true;
     block.dispose();
-}
+};
 
 Blockly.Folder.prototype.removeFromFolder = function(block) {
     block.isInFolder = false;
-}
+};
 
 Blockly.Folder.prototype.upOverFolder = function(e, block, inFolder) {
     if (!inFolder) {
@@ -354,5 +284,5 @@ Blockly.Folder.prototype.upOverFolder = function(e, block, inFolder) {
     } else {
         this.removeFromFolder(block);
     }
-}
+};
 
