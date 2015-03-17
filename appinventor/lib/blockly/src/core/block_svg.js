@@ -553,7 +553,7 @@ Blockly.BlockSvg.prototype.renderHere = function() {
     cursorX = icons[x].renderIcon(cursorX);
   }
   cursorX += Blockly.RTL ?
-      Blockly.BlockSvg.SEP_SPACE_X : -Blockly.BlockSvg.SEP_SPACE_X;
+      Blockly.BlockSvg.SEP_SPACE_X : -1 * Blockly.BlockSvg.SEP_SPACE_X;
   // If there are no icons, cursorX will be 0, otherwise it will be the
   // width that the first label needs to move over by.
 

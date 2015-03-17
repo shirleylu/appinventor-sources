@@ -4,6 +4,7 @@ goog.provide('Blockly.MiniWorkspace');
 
 goog.require('Blockly.MiniBubble');
 goog.require('Blockly.Icon');
+goog.require('Blockly.Workspace');
 
 
 /**
@@ -12,27 +13,23 @@ goog.require('Blockly.Icon');
  * @constructor
  */
 Blockly.MiniWorkspace = function() {
-    Blockly.MiniWorkspace.superClass_.constructor.call(this, null);
+    this.block_ = this;
 };
-goog.inherits(Blockly.MiniWorkspace, Blockly.Icon);
-
-/**
- * Width of workspace.
- * @private
- */
-Blockly.MiniWorkspace.prototype.workspaceWidth_ = 0;
-
-/**
- * Height of workspace.
- * @private
- */
-Blockly.MiniWorkspace.prototype.workspaceHeight_ = 0;
+goog.inherits(Blockly.MiniWorkspace, Blockly.Workspace);
 
 /**
  * Create the icon on the block.
  */
 Blockly.MiniWorkspace.prototype.createIcon = function() {
-    Blockly.Icon.prototype.createIcon_.call(this);
+
+    /* Here's the markup that will be generated:
+     <g class="blocklyIconGroup"></g>
+     */
+    this.iconGroup_ = Blockly.createSvgElement('g', {}, null);
+    this.block_.getSvgRoot().appendChild(this.iconGroup_);
+    Blockly.bindEvent_(this.iconGroup_, 'mouseup', this, this.iconClick_);
+    this.updateEditable();
+
     /* Here's the markup that will be generated:
      <rect class="blocklyIconShield" width="16" height="16" rx="4" ry="4"/>
      <text class="blocklyIconMark" x="8" y="12">★</text>
@@ -52,7 +49,36 @@ Blockly.MiniWorkspace.prototype.createIcon = function() {
     //this.iconMark_.appendChild(document.createTextNode('\u2605'));
 };
 
+/**
+ * Render the icon.
+ * @param {number} cursorX Horizontal offset at which to position the icon.
+ * @return {number} Horizontal offset for next item to draw.
+ */
+Blockly.MiniWorkspace.prototype.renderIcon = function(cursorX) {
+    if (this.block_.isCollapsed()) {
+        this.iconGroup_.setAttribute('display', 'none');
+        return cursorX;
+    }
+    this.iconGroup_.setAttribute('display', 'block');
+
+    var TOP_MARGIN = 5;
+    var diameter = 2 * Blockly.Icon.RADIUS;
+    if (Blockly.RTL) {
+        cursorX -= diameter;
+    }
+    this.iconGroup_.setAttribute('transform',
+        'translate(' + cursorX + ', ' + TOP_MARGIN + ')');
+    this.computeIconLocation();
+    if (Blockly.RTL) {
+        cursorX -= Blockly.BlockSvg.SEP_SPACE_X;
+    } else {
+        cursorX += diameter + Blockly.BlockSvg.SEP_SPACE_X;
+    }
+    return cursorX;
+};
+
 Blockly.MiniWorkspace.prototype.toggleIcon = function() {
+    this.block_.expandedFolder_ = !this.block_.expandedFolder_;
     this.iconMark_.innerHTML = (this.iconMark_.innerHTML == "+" ? "-" : "+");
 };
 
@@ -111,9 +137,16 @@ Blockly.MiniWorkspace.prototype.createEditor_ = function() {
  * Add or remove the UI indicating if this icon may be clicked or not.
  */
 Blockly.MiniWorkspace.prototype.updateEditable = function() {
+
     if (this.block_.isEditable()) {
         // Default behaviour for an icon.
-        Blockly.Icon.prototype.updateEditable.call(this);
+        if (!this.block_.isInFlyout) {
+            Blockly.addClass_(/** @type {!Element} */ (this.iconGroup_),
+                'blocklyIconGroup');
+        } else {
+            Blockly.removeClass_(/** @type {!Element} */ (this.iconGroup_),
+                'blocklyIconGroup');
+        }
     } else {
         // Close any mutator bubble.  Icon is not clickable.
         this.setVisible(false);
@@ -181,33 +214,6 @@ Blockly.MiniWorkspace.prototype.setVisible = function(visible) {
             this.createEditor_(), this.block_.svg_.svgPath_,
             this.iconX_, this.iconY_, null, null);
         var thisObj = this;
-        //this.flyout_.init(this.workspace_, false);
-        //this.flyout_.show(this.quarkXml_);
-
-        //this.rootBlock_ = this.block_.decompose(this.workspace_);
-        //var blocks = this.rootBlock_.getDescendants();
-        //for (var i = 0, child; child = blocks[i]; i++) {
-        //    child.render();
-        //}
-        //// The root block should not be dragable or deletable.
-        //this.rootBlock_.setMovable(false);
-        //this.rootBlock_.setDeletable(false);
-        //var margin = this.flyout_.CORNER_RADIUS * 2;
-        //var x = this.flyout_.width_ + margin;
-        //if (Blockly.RTL) {
-        //    x = -x;
-        //}
-        //this.rootBlock_.moveBy(x, margin);
-        //// Save the initial connections, then listen for further changes.
-        //if (this.block_.saveConnections) {
-        //    this.block_.saveConnections(this.rootBlock_);
-        //    this.sourceListener_ = Blockly.bindEvent_(
-        //        this.block_.workspace.getCanvas(),
-        //        'blocklyWorkspaceChange', this.block_,
-        //        function() {thisObj.block_.saveConnections(thisObj.rootBlock_)});
-        //}
-        //this.resizeBubble_();
-        // When the mutator's workspace changes, update the source block.
         Blockly.bindEvent_(this.workspace_.getCanvas(), 'blocklyWorkspaceChange',
             this.block_, function() {thisObj.workspaceChanged_();});
         this.updateColour();
@@ -231,6 +237,43 @@ Blockly.MiniWorkspace.prototype.setVisible = function(visible) {
     }
 };
 
+
+/**
+ * Notification that the icon has moved, but we don't really know where.
+ * Recompute the icon's location from scratch.
+ */
+Blockly.MiniWorkspace.prototype.computeIconLocation = function() {
+    // Find coordinates for the centre of the icon and update the arrow.
+    var blockXY = this.block_.getRelativeToSurfaceXY();
+    var iconXY = Blockly.getRelativeXY_(this.iconGroup_);
+    var newX = blockXY.x + iconXY.x + Blockly.Icon.RADIUS;
+    var newY = blockXY.y + iconXY.y + Blockly.Icon.RADIUS;
+    if (newX !== this.iconX_ || newY !== this.iconY_) {
+        this.setIconLocation(newX, newY);
+    }
+};
+
+/**
+ * Notification that the icon has moved.  Update the arrow accordingly.
+ * @param {number} x Absolute horizontal location.
+ * @param {number} y Absolute vertical location.
+ */
+Blockly.MiniWorkspace.prototype.setIconLocation = function(x, y) {
+    this.iconX_ = x;
+    this.iconY_ = y;
+    if (this.isVisible()) {
+        this.bubble_.setAnchorLocation(x, y);
+    }
+};
+
+/**
+ * Is the associated bubble visible?
+ * @return {boolean} True if the bubble is visible.
+ */
+Blockly.MiniWorkspace.prototype.isVisible = function() {
+    return !!this.bubble_;
+};
+
 /**
  * Update the source block when the mutator's blocks are changed.
  * Delete or bump any block that's out of bounds.
@@ -246,8 +289,8 @@ Blockly.MiniWorkspace.prototype.workspaceChanged_ = function() {
             var blockXY = block.getRelativeToSurfaceXY();
             var blockHW = block.getHeightWidth();
             if (block.isDeletable() && (Blockly.RTL ?
-                blockXY.x > -this.flyout_.width_ + MARGIN :
-                blockXY.x < this.flyout_.width_ - MARGIN)) {
+                blockXY.x > -this.bubble_.width_ + MARGIN :
+                blockXY.x < this.bubble_.width_ - MARGIN)) {
                 // Delete any block that's sitting on top of the flyout.
                 block.dispose(false, true);
             } else if (blockXY.y + blockHW.height < MARGIN) {
@@ -304,4 +347,44 @@ Blockly.MiniWorkspace.prototype.getFlyoutMetrics_ = function() {
 Blockly.MiniWorkspace.prototype.dispose = function() {
     this.block_.miniworkspace = null;
     Blockly.Icon.prototype.dispose.call(this);
+};
+
+/**
+ * Returns the center of the block's icon relative to the surface.
+ * @return {!Object} Object with x and y properties.
+ */
+Blockly.MiniWorkspace.prototype.getIconLocation = function() {
+    return {x: this.iconX_, y: this.iconY_};
+};
+
+/**
+ * Change the colour of the associated bubble to match its block.
+ */
+Blockly.MiniWorkspace.prototype.updateColour = function() {
+    if (this.isVisible()) {
+        var hexColour = Blockly.makeColour(this.block_.getColour());
+        this.bubble_.setColour(hexColour);
+    }
+};
+
+/**
+ * Add a block to the list of top blocks.
+ * @param {!Blockly.Block} block Block to remove.
+ */
+Blockly.MiniWorkspace.prototype.addTopBlock = function(block) {
+    block.workspace == this.workspace_;
+    block.isInFolder = true;
+    this.workspace_.topBlocks_.push(block);
+    if (Blockly.Realtime.isEnabled() && this == Blockly.mainWorkspace) {
+        Blockly.Realtime.addTopBlock(block);
+    }
+    this.workspace_.fireChangeEvent();
+};
+
+/**
+ * Get the SVG element that forms the drawing surface.
+ * @return {!Element} SVG element.
+ */
+Blockly.MiniWorkspace.prototype.getCanvas = function() {
+    return this.bubble_.bubbleGroup_;
 };

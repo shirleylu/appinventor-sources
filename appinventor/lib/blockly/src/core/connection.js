@@ -329,6 +329,9 @@ Blockly.Connection.prototype.moveTo = function(x, y) {
   this.x_ = x;
   this.y_ = y;
   // Insert it into its new location in the database.
+    if (!this.dbList_) {
+        this.dbList_ = this.sourceBlock_.workspace.workspace_.connectionDBList;
+    }
   this.dbList_[this.type].addConnection_(this);
 };
 

@@ -680,6 +680,17 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
       // resize to contain the newly positioned block.  Force a second resize
       // now that the block has been deleted.
       Blockly.fireUiEvent(window, 'resize');
+    } else if (Blockly.ALL_FOLDERS.length > 0) {
+         for (var i=0; i<Blockly.ALL_FOLDERS.length; i++) {
+           var folder = Blockly.ALL_FOLDERS[i];
+            if (folder != this_) {
+                 if (folder.isOverFolder(e) && !this_.isInFolder) {
+                   folder.addToFolder(this_);
+                 } else if (!folder.isOverFolder(e) && this_.isInFolder) {
+                   folder.removeFromFolder(this_);
+                 }
+            }
+        }
     }
     if (Blockly.highlightedConnection_) {
       Blockly.highlightedConnection_.unhighlight();
