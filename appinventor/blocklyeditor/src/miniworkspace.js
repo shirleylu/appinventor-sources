@@ -1,9 +1,6 @@
 'use strict';
 
 goog.provide('Blockly.MiniWorkspace');
-
-goog.require('Blockly.MiniBubble');
-goog.require('Blockly.Icon');
 goog.require('Blockly.Workspace');
 
 
@@ -13,7 +10,11 @@ goog.require('Blockly.Workspace');
  * @constructor
  */
 Blockly.MiniWorkspace = function() {
+    Blockly.MiniWorkspace.superClass_.constructor.call(this, null);
     this.block_ = this;
+    this.topBlocks_ = [];
+    this.maxBlocks = Infinity;
+    this.svgGroup_ = null; //this i
 };
 goog.inherits(Blockly.MiniWorkspace, Blockly.Workspace);
 
@@ -92,7 +93,9 @@ Blockly.MiniWorkspace.prototype.toggleIcon = function() {
 Blockly.MiniWorkspace.prototype.iconClick_ = function(e) {
     this.toggleIcon();
     if (this.block_.isEditable()) {
-        Blockly.Icon.prototype.iconClick_.call(this, e);
+        if (!this.block_.isInFlyout) {
+            this.setVisible(!this.isVisible());
+        }
     }
 };
 
@@ -208,32 +211,35 @@ Blockly.MiniWorkspace.prototype.setVisible = function(visible) {
         // No change.
         return;
     }
+    //GOT TO DO THIS
     if (visible) {
         // Create the bubble.
         this.bubble_ = new Blockly.MiniBubble(this.block_.workspace,
             this.createEditor_(), this.block_.svg_.svgPath_,
             this.iconX_, this.iconY_, null, null);
-        var thisObj = this;
-        Blockly.bindEvent_(this.workspace_.getCanvas(), 'blocklyWorkspaceChange',
-            this.block_, function() {thisObj.workspaceChanged_();});
-        this.updateColour();
-        this.bubble_.positionBubble_();
+        //var thisObj = this;
+        //Blockly.bindEvent_(this.workspace_.getCanvas(), 'blocklyWorkspaceChange',
+        //    this.block_, function() {thisObj.workspaceChanged_();});
+        //this.updateColour();
+        //this.bubble_.positionBubble_();
+        //this.createDom();
     } else {
-        // Dispose of the bubble.
-        this.svgDialog_ = null;
-        //this.flyout_.dispose();
-        //this.flyout_ = null;
-        this.workspace_.dispose();
-        this.workspace_ = null;
-        this.rootBlock_ = null;
-        this.bubble_.dispose();
-        this.bubble_ = null;
-        this.workspaceWidth_ = 0;
-        this.workspaceHeight_ = 0;
-        if (this.sourceListener_) {
-            Blockly.unbindEvent_(this.sourceListener_);
-            this.sourceListener_ = null;
-        }
+        this.dispose();
+        //// Dispose of the bubble.
+        //this.svgDialog_ = null;
+        ////this.flyout_.dispose();
+        ////this.flyout_ = null;
+        //this.workspace_.dispose();
+        //this.workspace_ = null;
+        //this.rootBlock_ = null;
+        //this.bubble_.dispose();
+        //this.bubble_ = null;
+        //this.workspaceWidth_ = 0;
+        //this.workspaceHeight_ = 0;
+        //if (this.sourceListener_) {
+        //    Blockly.unbindEvent_(this.sourceListener_);
+        //    this.sourceListener_ = null;
+        //}
     }
 };
 
@@ -342,14 +348,6 @@ Blockly.MiniWorkspace.prototype.getFlyoutMetrics_ = function() {
 };
 
 /**
- * Dispose of this mutator.
- */
-Blockly.MiniWorkspace.prototype.dispose = function() {
-    this.block_.miniworkspace = null;
-    Blockly.Icon.prototype.dispose.call(this);
-};
-
-/**
  * Returns the center of the block's icon relative to the surface.
  * @return {!Object} Object with x and y properties.
  */
@@ -372,19 +370,11 @@ Blockly.MiniWorkspace.prototype.updateColour = function() {
  * @param {!Blockly.Block} block Block to remove.
  */
 Blockly.MiniWorkspace.prototype.addTopBlock = function(block) {
-    block.workspace == this.workspace_;
+    block.workspace == this;
     block.isInFolder = true;
-    this.workspace_.topBlocks_.push(block);
+    this.topBlocks_.push(block);
     if (Blockly.Realtime.isEnabled() && this == Blockly.mainWorkspace) {
         Blockly.Realtime.addTopBlock(block);
     }
-    this.workspace_.fireChangeEvent();
-};
-
-/**
- * Get the SVG element that forms the drawing surface.
- * @return {!Element} SVG element.
- */
-Blockly.MiniWorkspace.prototype.getCanvas = function() {
-    return this.bubble_.bubbleGroup_;
+    this.fireChangeEvent();
 };

@@ -44,11 +44,11 @@ goog.require('Blockly.Workspace');
 Blockly.MiniBubble = function(workspace, content, shape,
                           anchorX, anchorY,
                           bubbleWidth, bubbleHeight) {
-    var angle = Blockly.Bubble.ARROW_ANGLE;
-    if (Blockly.RTL) {
-        angle = -angle;
-    }
-    this.arrow_radians_ = angle / 360 * Math.PI * 2;
+    //var angle = Blockly.Bubble.ARROW_ANGLE;
+    //if (Blockly.RTL) {
+    //    angle = -angle;
+    //}
+    //this.arrow_radians_ = angle / 360 * Math.PI * 2;
 
     this.workspace_ = workspace;
     this.content_ = content;
@@ -71,7 +71,7 @@ Blockly.MiniBubble = function(workspace, content, shape,
 
     // Render the bubble.
     this.positionBubble_();
-    this.renderArrow_();
+    //this.renderArrow_();
     this.rendered_ = true;
 
     if (!Blockly.readOnly) {
