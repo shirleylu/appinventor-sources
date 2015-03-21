@@ -67,7 +67,7 @@ Blockly.FolderSvg.prototype.init = function() {
     if (folder.mutator) {
         folder.mutator.createIcon();
     }
-    if (folder.miniworkspace) {
-        folder.miniworkspace.createIcon();
+    if (folder.folderIcon) {
+        folder.folderIcon.createIcon();
     }
 };

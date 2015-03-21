@@ -7,10 +7,10 @@ Blockly.Blocks['folder'] = {
     init: function() {
         this.setColour(Blockly.FOLDER_CATEGORY_HUE);
         this.appendDummyInput()
-            .appendField("folder");
+            .appendField("folder"+this.id);
             //.appendField(new Blockly.FieldTextBlockInput('FOLDER NAME'), 'TEXT');
         //this.setMutator(new Blockly.Mutator(['procedures_mutatorarg']));
-        this.setMiniWorkspace(new Blockly.MiniWorkspace());
+        this.setFolderIcon(new Blockly.FolderIcon());
     },
     decompose: function(workspace){
         return Blockly.decompose(workspace,'folder',this);

@@ -123,7 +123,7 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
     this.editable_ = true;
     this.collapsed_ = false;
 
-    this.miniworkspace = null;
+    this.miniworkspace = new Blockly.MiniWorkspace(this);
     this.expandedFolder_ = false;
     this.workspace = workspace;
     this.isInFlyout = workspace.isFlyout;
@@ -167,8 +167,8 @@ Blockly.Folder.prototype.getIcons = function() {
     if (this.errorIcon) {
         icons.push(this.errorIcon);
     }
-    if (this.miniworkspace) {
-        icons.push(this.miniworkspace);
+    if (this.folderIcon) {
+        icons.push(this.folderIcon);
     }
     return icons;
 };
@@ -239,15 +239,15 @@ Blockly.Folder.prototype.removeFromAllFolders = function(folder) {
  * Give this block a mini workspace.
  * @param {Blockly.MiniWorkspace} miniworkspace A mini workspace.
  */
-Blockly.Folder.prototype.setMiniWorkspace = function(miniworkspace) {
-    if (this.miniworkspace && this.miniworkspace !== miniworkspace) {
-        this.miniworkspace.dispose();
+Blockly.Folder.prototype.setFolderIcon = function(folderIcon) {
+    if (this.folderIcon && this.folderIcon !== folderIcon) {
+        this.folderIcon.dispose();
     }
-    if (miniworkspace) {
-        miniworkspace.block_ = this;
-        this.miniworkspace = miniworkspace;
+    if (folderIcon) {
+        folderIcon.block_ = this;
+        this.folderIcon = folderIcon;
         if (this.svg_) {
-            miniworkspace.createIcon();
+            folderIcon.createIcon();
         }
     }
 };
@@ -255,9 +255,9 @@ Blockly.Folder.prototype.setMiniWorkspace = function(miniworkspace) {
 Blockly.Folder.prototype.isOverFolder = function(e) {
     if (this.expandedFolder_){
         var mouseXY = Blockly.mouseToSvg(e);
-        var folderXY = Blockly.getSvgXY_(this.miniworkspace.bubble_.bubbleGroup_);
-        var width = this.miniworkspace.bubble_.width_;
-        var height = this.miniworkspace.bubble_.height_;
+        var folderXY = Blockly.getSvgXY_(this.miniworkspace.svgGroup_);
+        var width = this.miniworkspace.width_;
+        var height = this.miniworkspace.height_;
         var over = (mouseXY.x > folderXY.x) &&
             (mouseXY.x < folderXY.x + width) &&
             (mouseXY.y > folderXY.y) &&
@@ -269,17 +269,23 @@ Blockly.Folder.prototype.isOverFolder = function(e) {
 };
 
 Blockly.Folder.prototype.addToFolder = function(block) {
-    console.log(block);
     var dom = Blockly.Xml.blockToDom_(block);
     var bl = Blockly.Xml.domToBlock(this.miniworkspace, dom);
     bl.isInFolder = true;
     block.dispose();
+    this.miniworkspace.fireChangeEvent();
 };
 
 Blockly.Folder.prototype.removeFromFolder = function(block) {
-    block.isInFolder = false;
+    var dom = Blockly.Xml.blockToDom_(block);
+    var bl = Blockly.Xml.domToBlock(this.workspace,dom);
+    bl.isInFolder = false;
+    //this.miniworkspace.removeTopBlock(block);
+    block.dispose();
+    this.workspace.fireChangeEvent();
 };
 
+//TODO - the logic here needs to be fixed
 Blockly.Folder.prototype.upOverFolder = function(e, block, inFolder) {
     if (!inFolder) {
         this.addToFolder(block);
