@@ -68,19 +68,18 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
 
 
     Blockly.fireUiEvent(this.svgGroup_,'resize');
-    //this.render();
 
     this.positionMiniWorkspace_ ();
     this.rendered_ = true;
 
     //render topBlocks_
     var topBlocks = this.getTopBlocks();
+    this.topBlocks_ = [];
     for (var x = 0, b; b = topBlocks[x]; x++) {
         var dom = Blockly.Xml.blockToDom_(b);
         var bl = Blockly.Xml.domToBlock(this,dom);
         bl.IsInFolder = true;
     }
-    this.topBlocks_ = topBlocks;
     this.fireChangeEvent();
 
     if (!Blockly.readOnly) {

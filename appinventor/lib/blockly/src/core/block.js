@@ -250,6 +250,8 @@ Blockly.Block.prototype.initSvg = function() {
     Blockly.bindEvent_(this.svg_.getRootElement(), 'mousedown', this,
                        this.onMouseDown_);
   }
+    console.log(this.workspace);
+    console.log(this.workspace.getCanvas());
   this.workspace.getCanvas().appendChild(this.svg_.getRootElement());
 };
 

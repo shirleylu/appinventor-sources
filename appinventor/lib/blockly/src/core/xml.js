@@ -46,6 +46,12 @@ Blockly.Xml.workspaceToDom = function(workspace) {
   var blocks = workspace.getTopBlocks(true);
   for (var i = 0, block; block = blocks[i]; i++) {
     var element = Blockly.Xml.blockToDom_(block);
+      if (block.type == "folder") {
+          var folder = Blockly.Xml.workspaceToDom(block.miniworkspace);
+          for (var x = 0, b; b = folder.childNodes[x];){
+              element.appendChild(b);
+          }
+      }
     var xy = block.getRelativeToSurfaceXY();
     element.setAttribute('x', Blockly.RTL ? width - xy.x : xy.x);
     element.setAttribute('y', xy.y);
@@ -231,6 +237,11 @@ Blockly.Xml.domToWorkspace = function(workspace, xml) {
           xmlChild = xml.childNodes[x];
           if (xmlChild.nodeName.toLowerCase() == 'block') {
             var block = Blockly.Xml.domToBlock(workspace, xmlChild);
+              if (block.type == "folder") {
+                  block.miniworkspace.renderWorkspace(block,0,0);
+                  Blockly.Xml.domToWorkspace(block.miniworkspace,xmlChild);
+                  block.miniworkspace.disposeWorkspace();
+              }
             var blockX = parseInt(xmlChild.getAttribute('x'), 10);
             var blockY = parseInt(xmlChild.getAttribute('y'), 10);
             if (!isNaN(blockX) && !isNaN(blockY)) {
