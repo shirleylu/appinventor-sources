@@ -474,3 +474,12 @@ Blockly.Workspace.prototype.remainingCapacity = function() {
 
 // Export symbols that would otherwise be renamed by Closure compiler.
 Blockly.Workspace.prototype['clear'] = Blockly.Workspace.prototype.clear;
+
+Blockly.Workspace.prototype.moveBlock = function(block) {
+    //var oldWorkspace = block.workspace;
+    var dom = Blockly.Xml.blockToDom_(block);
+    var bl = Blockly.Xml.domToBlock(this,dom);
+    bl.isInFolder = this.isMW? true : false;
+    block.dispose();
+    this.fireChangeEvent();
+};

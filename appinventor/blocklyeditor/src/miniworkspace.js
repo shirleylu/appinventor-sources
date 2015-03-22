@@ -10,6 +10,9 @@ goog.require('Blockly.Workspace');
  * @constructor
  */
 Blockly.MiniWorkspace = function(folder) {
+    this.getMetrics = Blockly.mainWorkspace.getMetrics;
+    this.setMetrics = Blockly.mainWorkspace.setMetrics;
+
     Blockly.MiniWorkspace.superClass_.constructor.call(this, null);
     this.block_ = folder;
     this.topBlocks_ = [];
@@ -18,6 +21,7 @@ Blockly.MiniWorkspace = function(folder) {
     this.svgBlockCanvas_ = null;
     this.svgBubbleCanvas_ = null;
     this.svgGroupBack_ = null;
+    this.isMW = true;
 };
 goog.inherits(Blockly.MiniWorkspace, Blockly.Workspace);
 
@@ -59,6 +63,7 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
     this.height_ = Math.max(this.height_, 30 + Blockly.BlockSvg.FIELD_HEIGHT);
     this.svgGroupBack_.setAttribute('width',this.width_);
     this.svgGroupBack_.setAttribute('height',this.height_+20);
+    this.svgGroup_.setAttribute('width',this.width_);
     this.svgTitle_.setAttribute('transform','translate(10,'+(this.height_+10)+')');
 
 
@@ -67,6 +72,16 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
 
     this.positionMiniWorkspace_ ();
     this.rendered_ = true;
+
+    //render topBlocks_
+    var topBlocks = this.getTopBlocks();
+    for (var x = 0, b; b = topBlocks[x]; x++) {
+        var dom = Blockly.Xml.blockToDom_(b);
+        var bl = Blockly.Xml.domToBlock(this,dom);
+        bl.IsInFolder = true;
+    }
+    this.topBlocks_ = topBlocks;
+    this.fireChangeEvent();
 
     if (!Blockly.readOnly) {
         Blockly.bindEvent_(this.svgGroupBack_, 'mousedown', this,
@@ -86,6 +101,10 @@ Blockly.MiniWorkspace.prototype.disposeWorkspace = function () {
     this.workspace_ = null;
     this.content_ = null;
     this.shape_ = null;
+
+    for (var t = 0, block; block = this.topBlocks_[t]; t++) {
+        block.rendered = false;
+    }
 };
 
 Blockly.MiniWorkspace.prototype.createEditor_ = function () {
@@ -213,4 +232,5 @@ Blockly.MiniWorkspace.prototype.MiniWorkspaceMouseMove_ = function(e) {
 Blockly.MiniWorkspace.prototype.promote_ = function() {
     var svgGroup = this.svgGroup_.parentNode;
     svgGroup.appendChild(this.svgGroup_);
+    this.block_.promote();
 };

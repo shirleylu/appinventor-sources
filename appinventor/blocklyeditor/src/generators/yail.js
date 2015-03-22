@@ -571,6 +571,19 @@ Blockly.Yail.getDebuggingYail = function() {
   }
   
   var blocks = Blockly.mainWorkspace.getTopBlocks(true);
+    //[Shirley 3/21] post-process of topBlocks
+
+    var blocks2 = [];
+    for (var x = 0, block; block = blocks[x]; x++) {
+        if (block.category == "Folders") {
+            blocks2 = blocks2.concat(block.miniworkspace.topBlocks_);
+        } else {
+            blocks2 = blocks2.concat(block);
+        }
+    }
+    blocks = blocks2;
+    //[Shirley 3/21] end
+
   for (var x = 0, block; block = blocks[x]; x++) {
     
     // generate Yail for each top-level language block

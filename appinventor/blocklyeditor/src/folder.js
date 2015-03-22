@@ -226,13 +226,24 @@ Blockly.Folder.terminateDrag_ = function() {
 
 Blockly.Folder.prototype.removeFromAllFolders = function(folder) {
     var found = false;
+
+    var index = this.indexOfFolder();
+    if (index != -1){
+        Blockly.ALL_FOLDERS.splice(index,1);
+        found = true;
+    }
+    if (!found) {
+        throw 'Folder not present in ALL_FOLDERS.';
+    }
+};
+
+Blockly.Folder.prototype.indexOfFolder = function () {
     for (var f, x = 0; f = Blockly.ALL_FOLDERS[x]; x++) {
-        if (f == folder) {
-            Blockly.ALL_FOLDERS.splice(x, 1);
-            found = true;
-            break;
+        if (f == this) {
+            return x;
         }
     }
+    return -1;
 };
 
 /**
@@ -268,29 +279,15 @@ Blockly.Folder.prototype.isOverFolder = function(e) {
     }
 };
 
-Blockly.Folder.prototype.addToFolder = function(block) {
-    var dom = Blockly.Xml.blockToDom_(block);
-    var bl = Blockly.Xml.domToBlock(this.miniworkspace, dom);
-    bl.isInFolder = true;
-    block.dispose();
-    this.miniworkspace.fireChangeEvent();
-};
+Blockly.Folder.prototype.promote = function() {
+    var index = this.indexOfFolder();
+    var found = false;
+    if (index != -1){
+        found = true;
+        Blockly.ALL_FOLDERS.splice(0, 0, Blockly.ALL_FOLDERS.splice(index, 1)[0]);
+    }
 
-Blockly.Folder.prototype.removeFromFolder = function(block) {
-    var dom = Blockly.Xml.blockToDom_(block);
-    var bl = Blockly.Xml.domToBlock(this.workspace,dom);
-    bl.isInFolder = false;
-    //this.miniworkspace.removeTopBlock(block);
-    block.dispose();
-    this.workspace.fireChangeEvent();
-};
-
-//TODO - the logic here needs to be fixed
-Blockly.Folder.prototype.upOverFolder = function(e, block, inFolder) {
-    if (!inFolder) {
-        this.addToFolder(block);
-    } else {
-        this.removeFromFolder(block);
+    if (!found) {
+        throw 'Folder not present in ALL_FOLDERS.';
     }
 };
-
