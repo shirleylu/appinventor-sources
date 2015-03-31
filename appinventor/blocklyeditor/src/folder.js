@@ -123,7 +123,9 @@ Blockly.Folder.prototype.fill = function(workspace, prototypeName) {
     this.editable_ = true;
     this.collapsed_ = false;
 
-    this.miniworkspace = new Blockly.MiniWorkspace(this);
+    this.miniworkspace = new Blockly.MiniWorkspace(this,
+        Blockly.MiniWorkspace.getWorkspaceMetrics_,
+        Blockly.MiniWorkspace.setWorkspaceMetrics_);
     this.expandedFolder_ = false;
     this.workspace = workspace;
     this.isInFlyout = workspace.isFlyout;

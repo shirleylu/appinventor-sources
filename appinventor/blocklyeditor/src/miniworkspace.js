@@ -2,6 +2,7 @@
 
 goog.provide('Blockly.MiniWorkspace');
 goog.require('Blockly.Workspace');
+goog.require('Blockly.ScrollbarPair');
 
 
 /**
@@ -9,11 +10,11 @@ goog.require('Blockly.Workspace');
  * @extends {Blockly.Icon}
  * @constructor
  */
-Blockly.MiniWorkspace = function(folder) {
-    this.getMetrics = Blockly.mainWorkspace.getMetrics;
-    this.setMetrics = Blockly.mainWorkspace.setMetrics;
+Blockly.MiniWorkspace = function(folder,getMetrics,setMetrics) {
+    Blockly.MiniWorkspace.superClass_.constructor.call(this, getMetrics, setMetrics);
+    //this.getMetrics = getMetrics;
+    //this.setMetrics = setMetrics;
 
-    Blockly.MiniWorkspace.superClass_.constructor.call(this, null);
     this.block_ = folder;
     this.topBlocks_ = [];
     this.maxBlocks = Infinity;
@@ -23,9 +24,11 @@ Blockly.MiniWorkspace = function(folder) {
     this.svgGroupBack_ = null;
     this.isMW = true;
 };
+
 goog.inherits(Blockly.MiniWorkspace, Blockly.Workspace);
 
 Blockly.MiniWorkspace.prototype.rendered_ = false;
+Blockly.MiniWorkspace.prototype.scrollbar_ = true;
 
 Blockly.MiniWorkspace.prototype.anchorX_ = 0;
 Blockly.MiniWorkspace.prototype.anchorY_ = 0;
@@ -38,6 +41,82 @@ Blockly.MiniWorkspace.prototype.width_ = 0;
 Blockly.MiniWorkspace.prototype.height_ = 0;
 
 Blockly.MiniWorkspace.prototype.autoLayout_ = true;
+
+Blockly.MiniWorkspace.getWorkspaceMetrics_ = function () {
+    var svgSize = Blockly.svgSize();
+    console.log(svgSize);
+    //the workspace is just a percentage though.
+    svgSize.width *= 0.4;
+    svgSize.height *= 0.7;
+    console.log(svgSize);
+
+    //We don't use Blockly.Toolbox in our version of Blockly instead we use drawer.js
+    //svgSize.width -= Blockly.Toolbox.width;  // Zero if no Toolbox.
+    svgSize.width -= 0;  // Zero if no Toolbox.
+    var viewWidth = svgSize.width - Blockly.Scrollbar.scrollbarThickness;
+    var viewHeight = svgSize.height - Blockly.Scrollbar.scrollbarThickness;
+    try {
+        var blockBox = this.getCanvas().getBBox();
+    } catch (e) {
+        // Firefox has trouble with hidden elements (Bug 528969).
+        return null;
+    }
+    console.log(blockBox);
+    if (this.scrollbar_) {
+        // Add a border around the content that is at least half a screenful wide.
+        // Ensure border is wide enough that blocks can scroll over entire screen.
+        var leftEdge = Math.min(blockBox.x - viewWidth / 2,
+            blockBox.x + blockBox.width - viewWidth);
+        var rightEdge = Math.max(blockBox.x + blockBox.width + viewWidth / 2,
+            blockBox.x + viewWidth);
+        var topEdge = Math.min(blockBox.y - viewHeight / 2,
+            blockBox.y + blockBox.height - viewHeight);
+        var bottomEdge = Math.max(blockBox.y + blockBox.height + viewHeight / 2,
+            blockBox.y + viewHeight);
+    } else {
+        var leftEdge = blockBox.x;
+        var rightEdge = leftEdge + blockBox.width;
+        var topEdge = blockBox.y;
+        var bottomEdge = topEdge + blockBox.height;
+    }
+    //We don't use Blockly.Toolbox in our version of Blockly instead we use drawer.js
+    //var absoluteLeft = Blockly.RTL ? 0 : Blockly.Toolbox.width;
+    var absoluteLeft = Blockly.RTL ? 0 : 0;
+    var metrics = {
+        viewHeight: svgSize.height,
+        viewWidth: svgSize.width,
+        contentHeight: bottomEdge - topEdge,
+        contentWidth: rightEdge - leftEdge,
+        viewTop: -this.scrollY,
+        viewLeft: -this.scrollX,
+        contentTop: topEdge,
+        contentLeft: leftEdge,
+        absoluteTop: 0,
+        absoluteLeft: absoluteLeft
+    };
+    return metrics;
+};
+
+Blockly.MiniWorkspace.setWorkspaceMetrics_ = function(xyRatio) {
+    if (!this.scrollbar) {
+        throw 'Attempt to set mini workspace scroll without scrollbars.';
+    }
+    var metrics = Blockly.MiniWorkspace.getWorkspaceMetrics_();
+    if (goog.isNumber(xyRatio.x)) {
+        this.scrollX = -metrics.contentWidth * xyRatio.x -
+        metrics.contentLeft;
+    }
+    if (goog.isNumber(xyRatio.y)) {
+        this.scrollY = -metrics.contentHeight * xyRatio.y -
+        metrics.contentTop;
+    }
+    var translation = 'translate(' +
+        (this.scrollX + metrics.absoluteLeft) + ',' +
+        (this.scrollY + metrics.absoluteTop) + ')';
+    this.getCanvas().setAttribute('transform', translation);
+    this.getBubbleCanvas().setAttribute('transform',
+        translation);
+};
 
 //TODO
 Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anchorY) {
@@ -63,14 +142,17 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
     this.height_ = Math.max(this.height_, 30 + Blockly.BlockSvg.FIELD_HEIGHT);
     this.svgGroupBack_.setAttribute('width',this.width_);
     this.svgGroupBack_.setAttribute('height',this.height_+20);
+    this.svgGroupBack_.setAttribute('transform','translate(-5,-5)');
     this.svgGroup_.setAttribute('width',this.width_);
-    this.svgTitle_.setAttribute('transform','translate(10,'+(this.height_+10)+')');
+    this.svgTitle_.setAttribute('transform','translate(10,'+(this.height_+5)+')');
 
 
     Blockly.fireUiEvent(this.svgGroup_,'resize');
 
     this.positionMiniWorkspace_ ();
     this.rendered_ = true;
+    this.scrollbar = new Blockly.ScrollbarPair(this);
+    //this.scrollbar.resize();
 
     //render topBlocks_
     var topBlocks = this.getTopBlocks();
@@ -106,31 +188,23 @@ Blockly.MiniWorkspace.prototype.disposeWorkspace = function () {
     }
 };
 
-Blockly.MiniWorkspace.prototype.createEditor_ = function () {
-    this.svgBlockCanvas_ = Blockly.createSvgElement('svg',
-        {'x': Blockly.Bubble.BORDER_WIDTH, 'y': Blockly.Bubble.BORDER_WIDTH},
-        this.svgGroup_);
-    Blockly.createSvgElement('rect',
-        {'class': 'blocklyMutatorBackground',
-            'height': '70%', 'width': '40%'}, this.svgBlockCanvas_);
-    var workspace = new Blockly.Workspace(
-        function() {return this.getFlyoutMetrics_();}, null);
-
-    this.svgBlockCanvas_.appendChild(workspace.createDom());
-
-    Blockly.bindEvent_(this.svgBlockCanvas_, 'mousedown', this.svgBlockCanvas_,
-        function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-};
-
 //MiniWorkspace cannot be resized - this can change in the future
 Blockly.MiniWorkspace.prototype.createDom_ = function () {
     this.svgGroup_ = Blockly.createSvgElement('g', {}, null);
     var svgGroupEmboss = Blockly.createSvgElement('g',
         {'filter': 'url(#blocklyEmboss)'}, this.svgGroup_);
-    this.createEditor_();
+
+    this.svgBlockCanvas_ = Blockly.createSvgElement('g', {}, this.svgGroup_);
+    Blockly.bindEvent_(this.svgBlockCanvas_, 'mousedown', this.svgBlockCanvas_,
+        function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+    Blockly.createSvgElement('rect',
+        {'class': 'blocklyMutatorBackground',
+            'height': '70%', 'width': '40%'}, this.svgBlockCanvas_);
+
     this.svgBubbleCanvas_ = Blockly.createSvgElement('g', {}, this.svgGroup_);
     this.svgGroupBack_ = Blockly.createSvgElement('rect',
         {'class': 'blocklyDraggable', 'x': 0, 'y': 0,
