@@ -475,11 +475,81 @@ Blockly.Workspace.prototype.remainingCapacity = function() {
 // Export symbols that would otherwise be renamed by Closure compiler.
 Blockly.Workspace.prototype['clear'] = Blockly.Workspace.prototype.clear;
 
+// Shirley's brand new function, this is only used by Shirley folder functions.
+// oldworkspace: block.workspace
+// newworkspace: this
+// oldworkspace and newworkspace will always be different when called!
 Blockly.Workspace.prototype.moveBlock = function(block) {
-    //var oldWorkspace = block.workspace;
-    var dom = Blockly.Xml.blockToDom_(block);
-    var bl = Blockly.Xml.domToBlock(this,dom);
-    bl.isInFolder = this.isMW? true : false;
-    block.dispose();
+    var oldWorkspace = block.workspace;
+    var newWorkspace = this;
+    //var dom = Blockly.Xml.blockToDom_(block);
+    //var bl = Blockly.Xml.domToBlock(this,dom);
+
+    // 3 cases: main -> folder, folder -> main, folder -> folder
+    if (!oldWorkspace.isMW && newWorkspace.isMW) {
+        var blockRelativeToMWXY = block.getRelativeToSurfaceXY();
+        var miniWorkspaceOrigin = Blockly.getRelativeXY_(newWorkspace.svgGroup_);
+        oldWorkspace.removeTopBlock(block);
+        newWorkspace.addTopBlock(block);
+
+        // doesn't do the right thing v
+        //block.svg_.dispose(); //get rid of svg in old workspace
+        //surgically removes all svg associated with block from old workspace canvas
+        var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
+        block.workspace = newWorkspace;
+        newWorkspace.getCanvas().appendChild(svgGroup);
+
+        console.log("moveBlock");
+        console.log(miniWorkspaceOrigin);
+        console.log(blockRelativeToMWXY);
+
+        var x = blockRelativeToMWXY.x - miniWorkspaceOrigin.x;
+        var y = blockRelativeToMWXY.y - miniWorkspaceOrigin.y;
+        block.svg_.getRootElement().setAttribute('transform',
+            'translate(' + x + ', ' + y + ')');
+        //newWorkspace.render();
+    }
+    else if (oldWorkspace.isMW && !newWorkspace.isMW) {
+        var blockRelativeToWXY = block.getRelativeToSurfaceXY();
+        var miniWorkspaceOrigin = Blockly.getRelativeXY_(oldWorkspace.svgGroup_);
+        oldWorkspace.removeTopBlock(block);
+        newWorkspace.addTopBlock(block);
+
+        // doesn't do the right thing v
+        //block.svg_.dispose(); //get rid of svg in old workspace
+        //surgically removes all svg associated with block from old workspace canvas
+        var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
+        block.workspace = newWorkspace;
+        newWorkspace.getCanvas().appendChild(svgGroup);
+
+        console.log("moveBlock");
+        console.log(miniWorkspaceOrigin);
+        console.log(blockRelativeToWXY);
+
+        var x = blockRelativeToWXY.x + miniWorkspaceOrigin.x;
+        var y = blockRelativeToWXY.y + miniWorkspaceOrigin.y;
+        block.svg_.getRootElement().setAttribute('transform',
+            'translate(' + x + ', ' + y + ')');
+        //newWorkspace.render();
+    }
+    else if (oldWorkspace.isMW && newWorkspace.isMW) {
+
+        var blockRelativeToMWXY = block.getRelativeToSurfaceXY();
+        var oldMiniWorkspaceOrigin = Blockly.getRelativeXY_(oldWorkspace.svgGroup_);
+        var newMiniWorkspaceOrigin = Blockly.getRelativeXY_(newWorkspace.svgGroup_);
+        oldWorkspace.removeTopBlock(block);
+        newWorkspace.addTopBlock(block);
+
+        var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
+        block.workspace = newWorkspace;
+        newWorkspace.getCanvas().appendChild(svgGroup);
+
+        var x = blockRelativeToMWXY.x + oldMiniWorkspaceOrigin.x - newMiniWorkspaceOrigin.x;
+        var y = blockRelativeToMWXY.y + oldMiniWorkspaceOrigin.y - newMiniWorkspaceOrigin.y;
+        block.svg_.getRootElement().setAttribute('transform',
+            'translate(' + x + ', ' + y + ')');
+    }
+    block.isInFolder = this.isMW? true : false;
+    //block.dispose();
     this.fireChangeEvent();
 };

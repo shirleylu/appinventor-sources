@@ -688,6 +688,7 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
                  if (folder.isOverFolder(e)) { //block not already in folder
                      over = true;
                      if (this_.workspace != folder.miniworkspace) {
+                         folder.miniworkspace.promote_();
                          folder.miniworkspace.moveBlock(this_); //move the block into new workspace
                      }
                      break;
@@ -993,8 +994,10 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
     }
     if (Blockly.Block.dragMode_ == 2) {
       // Unrestricted dragging.
+      //  console.log("drag " + this_.startDragX+ " "+ this_.startDragY+ " "+dx+" "+dy);
       var x = this_.startDragX + dx;
       var y = this_.startDragY + dy;
+        //console.log("drag2 "+x+" "+y);
       this_.svg_.getRootElement().setAttribute('transform',
           'translate(' + x + ', ' + y + ')');
       // Drag all the nested bubbles.

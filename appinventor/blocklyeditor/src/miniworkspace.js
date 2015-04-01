@@ -124,7 +124,7 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
 
     this.workspace_ = folder.workspace;
     this.shape_ = folder.svg_.svgPath_;
-    var canvas = this.workspace_.getCanvas();
+    var canvas = Blockly.mainWorkspace.getCanvas();
     canvas.appendChild(this.createDom_());
 
     this.setAnchorLocation(anchorX, anchorY);
