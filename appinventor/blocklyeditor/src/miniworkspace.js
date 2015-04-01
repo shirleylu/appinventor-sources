@@ -155,14 +155,17 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
     //this.scrollbar.resize();
 
     //render topBlocks_
-    var topBlocks = this.getTopBlocks();
+    //var topBlocks = this.getTopBlocks();
     this.topBlocks_ = [];
-    for (var x = 0, b; b = topBlocks[x]; x++) {
-        var dom = Blockly.Xml.blockToDom_(b);
-        var bl = Blockly.Xml.domToBlock(this,dom);
-        bl.IsInFolder = true;
-    }
-    this.fireChangeEvent();
+    //for (var x = 0, b; b = topBlocks[x]; x++) {
+    //    var dom = Blockly.Xml.blockToDom_(b);
+    //    var bl = Blockly.Xml.domToBlock(this,dom);
+    //    bl.IsInFolder = true;
+    //}
+    //this.fireChangeEvent();
+    if (this.xml)
+        Blockly.Xml.domToWorkspace(this, this.xml);
+
 
     if (!Blockly.readOnly) {
         Blockly.bindEvent_(this.svgGroupBack_, 'mousedown', this,

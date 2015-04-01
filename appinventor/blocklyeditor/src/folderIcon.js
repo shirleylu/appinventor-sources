@@ -26,7 +26,8 @@ Blockly.FolderIcon.prototype.createIcon = function () {
         {'class': 'blocklyIconMark',
             'x': Blockly.Icon.RADIUS,
             'y': 2 * Blockly.Icon.RADIUS - 4}, this.iconGroup_);
-    this.iconMark_.appendChild(document.createTextNode('\u002b'));
+    var icon = this.block_.expandedFolder_ ? "-" : "+";
+    this.iconMark_.appendChild(document.createTextNode(icon));
 };
 
 Blockly.FolderIcon.prototype.renderIcon = function(cursorX) {
@@ -54,7 +55,7 @@ Blockly.FolderIcon.prototype.renderIcon = function(cursorX) {
 
 Blockly.FolderIcon.prototype.toggleIcon = function() {
     this.block_.expandedFolder_ = !this.block_.expandedFolder_;
-    this.iconMark_.innerHTML = (this.iconMark_.innerHTML == "+" ? "-" : "+");
+    this.iconMark_.innerHTML = this.block_.expandedFolder_ ? "-" : "+";
 };
 
 Blockly.FolderIcon.prototype.iconClick_ = function(e) {
@@ -94,6 +95,8 @@ Blockly.FolderIcon.prototype.setVisible = function(visible) {
         // Create the bubble.
         this.block_.miniworkspace.renderWorkspace(this.block_, this.iconX_, this.iconY_);
     } else {
+        this.block_.miniworkspace.xml = Blockly.Xml.workspaceToDom(this.block_.miniworkspace);
+        console.log(this.block_.miniworkspace.xml);
         this.block_.miniworkspace.disposeWorkspace();
         //this.dispose();
         //// Dispose of the bubble.
