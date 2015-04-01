@@ -238,9 +238,11 @@ Blockly.Xml.domToWorkspace = function(workspace, xml) {
           if (xmlChild.nodeName.toLowerCase() == 'block') {
             var block = Blockly.Xml.domToBlock(workspace, xmlChild);
               if (block.type == "folder") {
-                  block.miniworkspace.renderWorkspace(block,0,0);
-                  Blockly.Xml.domToWorkspace(block.miniworkspace,xmlChild);
-                  block.miniworkspace.disposeWorkspace();
+                  var folderXML = goog.dom.createDom('xml');
+                  while(xmlChild.children.length > 0) {
+                      folderXML.appendChild(xmlChild.children[0]);
+                  }
+                  block.miniworkspace.xml = folderXML;
               }
             var blockX = parseInt(xmlChild.getAttribute('x'), 10);
             var blockY = parseInt(xmlChild.getAttribute('y'), 10);

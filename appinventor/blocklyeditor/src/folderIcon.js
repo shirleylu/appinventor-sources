@@ -96,7 +96,6 @@ Blockly.FolderIcon.prototype.setVisible = function(visible) {
         this.block_.miniworkspace.renderWorkspace(this.block_, this.iconX_, this.iconY_);
     } else {
         this.block_.miniworkspace.xml = Blockly.Xml.workspaceToDom(this.block_.miniworkspace);
-        console.log(this.block_.miniworkspace.xml);
         this.block_.miniworkspace.disposeWorkspace();
         //this.dispose();
         //// Dispose of the bubble.
