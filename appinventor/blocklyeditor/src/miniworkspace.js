@@ -43,6 +43,8 @@ Blockly.MiniWorkspace.prototype.height_ = 0;
 Blockly.MiniWorkspace.prototype.autoLayout_ = true;
 
 Blockly.MiniWorkspace.getWorkspaceMetrics_ = function () {
+    console.log("within getWorkspaceMetrics_, this is ");
+    console.log(this);
     var svgSize = Blockly.svgSize();
     console.log(svgSize);
     //the workspace is just a percentage though.
@@ -98,10 +100,12 @@ Blockly.MiniWorkspace.getWorkspaceMetrics_ = function () {
 };
 
 Blockly.MiniWorkspace.setWorkspaceMetrics_ = function(xyRatio) {
+    console.log("within setWorkspaceMetrics_ this is: ");
+    console.log(this);
     if (!this.scrollbar) {
         throw 'Attempt to set mini workspace scroll without scrollbars.';
     }
-    var metrics = Blockly.MiniWorkspace.getWorkspaceMetrics_();
+    var metrics = this.getMetrics();//Blockly.MiniWorkspace.getWorkspaceMetrics_();
     if (goog.isNumber(xyRatio.x)) {
         this.scrollX = -metrics.contentWidth * xyRatio.x -
         metrics.contentLeft;
@@ -152,7 +156,7 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
     this.positionMiniWorkspace_ ();
     this.rendered_ = true;
     this.scrollbar = new Blockly.ScrollbarPair(this);
-    //this.scrollbar.resize();
+    this.scrollbar.resize();
 
     //render topBlocks_
     //var topBlocks = this.getTopBlocks();

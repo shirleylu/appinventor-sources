@@ -499,10 +499,6 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
 
-        console.log("moveBlock");
-        console.log(miniWorkspaceOrigin);
-        console.log(blockRelativeToMWXY);
-
         var x = blockRelativeToMWXY.x - miniWorkspaceOrigin.x;
         var y = blockRelativeToMWXY.y - miniWorkspaceOrigin.y;
         block.svg_.getRootElement().setAttribute('transform',
@@ -521,10 +517,6 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
-
-        console.log("moveBlock");
-        console.log(miniWorkspaceOrigin);
-        console.log(blockRelativeToWXY);
 
         var x = blockRelativeToWXY.x + miniWorkspaceOrigin.x;
         var y = blockRelativeToWXY.y + miniWorkspaceOrigin.y;
