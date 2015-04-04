@@ -485,6 +485,8 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
     //var dom = Blockly.Xml.blockToDom_(block);
     //var bl = Blockly.Xml.domToBlock(this,dom);
 
+    var x, y,dx,dy;
+
     // 3 cases: main -> folder, folder -> main, folder -> folder
     if (!oldWorkspace.isMW && newWorkspace.isMW) {
         var blockRelativeToMWXY = block.getRelativeToSurfaceXY();
@@ -499,8 +501,11 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
 
-        var x = blockRelativeToMWXY.x - miniWorkspaceOrigin.x;
-        var y = blockRelativeToMWXY.y - miniWorkspaceOrigin.y;
+        dx = -1 * miniWorkspaceOrigin.x;
+        dy = -1 * miniWorkspaceOrigin.y;
+
+        x = blockRelativeToMWXY.x + dx;
+        y = blockRelativeToMWXY.y + dy;
         block.svg_.getRootElement().setAttribute('transform',
             'translate(' + x + ', ' + y + ')');
         //newWorkspace.render();
@@ -518,8 +523,11 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
 
-        var x = blockRelativeToWXY.x + miniWorkspaceOrigin.x;
-        var y = blockRelativeToWXY.y + miniWorkspaceOrigin.y;
+        dx = miniWorkspaceOrigin.x;
+        dy = miniWorkspaceOrigin.y;
+
+        x = blockRelativeToWXY.x + dx;
+        y = blockRelativeToWXY.y + dy;
         block.svg_.getRootElement().setAttribute('transform',
             'translate(' + x + ', ' + y + ')');
         //newWorkspace.render();
@@ -536,11 +544,64 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
 
-        var x = blockRelativeToMWXY.x + oldMiniWorkspaceOrigin.x - newMiniWorkspaceOrigin.x;
-        var y = blockRelativeToMWXY.y + oldMiniWorkspaceOrigin.y - newMiniWorkspaceOrigin.y;
+        dx = oldMiniWorkspaceOrigin.x - newMiniWorkspaceOrigin.x;
+        dy = oldMiniWorkspaceOrigin.y - newMiniWorkspaceOrigin.y
+
+        x = blockRelativeToMWXY.x + dx;
+        y = blockRelativeToMWXY.y + dy;
         block.svg_.getRootElement().setAttribute('transform',
             'translate(' + x + ', ' + y + ')');
     }
+    var oldConnectionDB = oldWorkspace.connectionDBList;
+    var newConnectionDB = newWorkspace.connectionDBList;
+
+    console.log(oldConnectionDB);
+    console.log(newConnectionDB);
+
+    //change the connection.
+    // Need to change output connection, inputlist connections, previous connection
+    if (block.outputConnection) {
+        var type = block.outputConnection.type;
+        oldConnectionDB[type].removeConnection_(block.outputConnection);
+        newConnectionDB[type].addConnection_(block.outputConnection);
+        block.outputConnection.dbList_ = newConnectionDB;
+        block.outputConnection.x_ += dx;
+        block.outputConnection.y_ += dy;
+    }
+    if (block.previousConnection) {
+        var type = block.previousConnection.type;
+        oldConnectionDB[type].removeConnection_(block.previousConnection);
+        newConnectionDB[type].addConnection_(block.previousConnection);
+        block.previousConnection.dbList_ = newConnectionDB;
+        block.previousConnection.x_ += dx;
+        block.previousConnection.y_ += dy;
+    }
+    if (block.nextConnection) {
+        var type = block.nextConnection.type;
+        oldConnectionDB[type].removeConnection_(block.nextConnection);
+        newConnectionDB[type].addConnection_(block.nextConnection);
+        block.nextConnection.dbList_ = newConnectionDB;
+        block.nextConnection.x_ += dx;
+        block.nextConnection.y_ += dy;
+    }
+    if (block.inputList) {
+        var input, type;
+        for (var x = 0; x < block.inputList.length; x++) {
+            input = block.inputList[x];
+            if (input.connection) {
+                type = input.connection.type;
+                oldConnectionDB[type].removeConnection_(input.connection);
+                newConnectionDB[type].addConnection_(input.connection);
+                input.connection.dbList_ = newConnectionDB;
+                input.connection.x_ += dx;
+                input.connection.y_ += dy;
+            }
+        }
+    }
+
+    console.log(oldConnectionDB);
+    console.log(newConnectionDB);
+
     block.isInFolder = this.isMW? true : false;
     //block.dispose();
     this.fireChangeEvent();
