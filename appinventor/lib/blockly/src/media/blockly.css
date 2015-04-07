@@ -136,6 +136,9 @@
   border: none;
   outline: none;
 }
+.blocklyFolderBackground {
+    fill: rgba(1,1,1,0);
+}
 .blocklyContextMenuBackground, .blocklyMutatorBackground {
   fill: #fff;
   stroke-width: 1;

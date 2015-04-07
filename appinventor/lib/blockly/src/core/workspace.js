@@ -530,6 +530,7 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         y = blockRelativeToWXY.y + dy;
         block.svg_.getRootElement().setAttribute('transform',
             'translate(' + x + ', ' + y + ')');
+
         //newWorkspace.render();
     }
     else if (oldWorkspace.isMW && newWorkspace.isMW) {
@@ -552,11 +553,14 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.svg_.getRootElement().setAttribute('transform',
             'translate(' + x + ', ' + y + ')');
     }
+    for (var cb = 0; cb < block.childBlocks_.length; cb++) {
+        block.childBlocks_[cb].workspace = newWorkspace;
+    }
+
+    // Connections below
+
     var oldConnectionDB = oldWorkspace.connectionDBList;
     var newConnectionDB = newWorkspace.connectionDBList;
-
-    console.log(oldConnectionDB);
-    console.log(newConnectionDB);
 
     //change the connection.
     // Need to change output connection, inputlist connections, previous connection
@@ -598,9 +602,6 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
             }
         }
     }
-
-    console.log(oldConnectionDB);
-    console.log(newConnectionDB);
 
     block.isInFolder = this.isMW? true : false;
     //block.dispose();

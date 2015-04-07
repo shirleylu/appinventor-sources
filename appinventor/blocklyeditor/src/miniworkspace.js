@@ -43,14 +43,10 @@ Blockly.MiniWorkspace.prototype.height_ = 0;
 Blockly.MiniWorkspace.prototype.autoLayout_ = true;
 
 Blockly.MiniWorkspace.getWorkspaceMetrics_ = function () {
-    console.log("within getWorkspaceMetrics_, this is ");
-    console.log(this);
     var svgSize = Blockly.svgSize();
-    console.log(svgSize);
     //the workspace is just a percentage though.
     svgSize.width *= 0.4;
     svgSize.height *= 0.7;
-    console.log(svgSize);
 
     //We don't use Blockly.Toolbox in our version of Blockly instead we use drawer.js
     //svgSize.width -= Blockly.Toolbox.width;  // Zero if no Toolbox.
@@ -63,7 +59,6 @@ Blockly.MiniWorkspace.getWorkspaceMetrics_ = function () {
         // Firefox has trouble with hidden elements (Bug 528969).
         return null;
     }
-    console.log(blockBox);
     if (this.scrollbar_) {
         // Add a border around the content that is at least half a screenful wide.
         // Ensure border is wide enough that blocks can scroll over entire screen.
@@ -100,8 +95,6 @@ Blockly.MiniWorkspace.getWorkspaceMetrics_ = function () {
 };
 
 Blockly.MiniWorkspace.setWorkspaceMetrics_ = function(xyRatio) {
-    console.log("within setWorkspaceMetrics_ this is: ");
-    console.log(this);
     if (!this.scrollbar) {
         throw 'Attempt to set mini workspace scroll without scrollbars.';
     }
@@ -201,7 +194,9 @@ Blockly.MiniWorkspace.prototype.createDom_ = function () {
     var svgGroupEmboss = Blockly.createSvgElement('g',
         {'filter': 'url(#blocklyEmboss)'}, this.svgGroup_);
 
-    this.svgBlockCanvas_ = Blockly.createSvgElement('g', {}, this.svgGroup_);
+    this.svgBlockCanvasOuter_ = Blockly.createSvgElement('svg', {'height': '70%', 'width': '40%'}, this.svgGroup_);
+
+    this.svgBlockCanvas_ = Blockly.createSvgElement('g', {}, this.svgBlockCanvasOuter_);
     Blockly.bindEvent_(this.svgBlockCanvas_, 'mousedown', this.svgBlockCanvas_,
         function(e) {
             e.preventDefault();
@@ -209,14 +204,17 @@ Blockly.MiniWorkspace.prototype.createDom_ = function () {
         });
 
     Blockly.createSvgElement('rect',
-        {'class': 'blocklyMutatorBackground',
-            'height': '70%', 'width': '40%'}, this.svgBlockCanvas_);
+        {'class': 'blocklyFolderBackground',
+            'height': '100%', 'width': '100%'}, this.svgBlockCanvas_);
 
-    this.svgBubbleCanvas_ = Blockly.createSvgElement('g', {}, this.svgGroup_);
+    this.svgBubbleCanvas_ = Blockly.createSvgElement('g', {'height': '100%', 'width': '100%'}, this.svgGroup_);
     this.svgGroupBack_ = Blockly.createSvgElement('rect',
         {'class': 'blocklyDraggable', 'x': 0, 'y': 0,
             'rx': Blockly.Bubble.BORDER_WIDTH, 'ry': Blockly.Bubble.BORDER_WIDTH},
         svgGroupEmboss);
+    Blockly.createSvgElement('rect',
+        {'class':'blocklyMutatorBackground',
+            'height': '70%', 'width': '40%'}, svgGroupEmboss);
     this.svgTitle_ = Blockly.createSvgElement('text',{
         'class':'blocklyText'},this.svgGroup_);
     this.svgTitle_.innerHTML="Folder"+this.block_.id;
