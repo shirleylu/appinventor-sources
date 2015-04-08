@@ -501,8 +501,10 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
 
-        dx = -1 * miniWorkspaceOrigin.x;
-        dy = -1 * miniWorkspaceOrigin.y;
+        var translate_ = newWorkspace.getTranslate();
+
+        dx = -1 * miniWorkspaceOrigin.x - parseInt(translate_[0]);
+        dy = -1 * miniWorkspaceOrigin.y - parseInt(translate_[1]);
 
         x = blockRelativeToMWXY.x + dx;
         y = blockRelativeToMWXY.y + dy;
@@ -523,8 +525,10 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
 
-        dx = miniWorkspaceOrigin.x;
-        dy = miniWorkspaceOrigin.y;
+        var translate_ = oldWorkspace.getTranslate();
+
+        dx = miniWorkspaceOrigin.x + parseInt(translate_[0]);
+        dy = miniWorkspaceOrigin.y + parseInt(translate_[1]);
 
         x = blockRelativeToWXY.x + dx;
         y = blockRelativeToWXY.y + dy;
@@ -545,8 +549,13 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.workspace = newWorkspace;
         newWorkspace.getCanvas().appendChild(svgGroup);
 
-        dx = oldMiniWorkspaceOrigin.x - newMiniWorkspaceOrigin.x;
-        dy = oldMiniWorkspaceOrigin.y - newMiniWorkspaceOrigin.y
+        var oldTranslate_ = oldWorkspace.getTranslate();
+        var newTranslate_ = newWorkspace.getTranslate();
+
+        dx = oldMiniWorkspaceOrigin.x + parseInt(oldTranslate_[0])
+            - newMiniWorkspaceOrigin.x - parseInt(newTranslate_[0]);
+        dy = oldMiniWorkspaceOrigin.y + parseInt(oldTranslate_[1])
+            - newMiniWorkspaceOrigin.y - parseInt(newTranslate_[1]);
 
         x = blockRelativeToMWXY.x + dx;
         y = blockRelativeToMWXY.y + dy;
@@ -557,10 +566,24 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         block.childBlocks_[cb].workspace = newWorkspace;
     }
 
-    // Connections below
+    // at this point, block.workspace is the newWorkspace
+    oldWorkspace.moveConnections(block, dx, dy);
+
+    block.isInFolder = this.isMW? true : false;
+    //block.dispose();
+    this.fireChangeEvent();
+};
+
+Blockly.Workspace.prototype.moveConnections = function (block, dx, dy) {
+    var oldWorkspace = this;
+    var newWorkspace = block.workspace;
 
     var oldConnectionDB = oldWorkspace.connectionDBList;
     var newConnectionDB = newWorkspace.connectionDBList;
+
+    console.log("block in");
+    console.log(oldConnectionDB);
+    console.log(newConnectionDB);
 
     //change the connection.
     // Need to change output connection, inputlist connections, previous connection
@@ -603,7 +626,20 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
         }
     }
 
-    block.isInFolder = this.isMW? true : false;
-    //block.dispose();
-    this.fireChangeEvent();
+    // must also move the connections of childblocks
+    for (var x = 0; x < block.childBlocks_.length; x++) {
+        oldWorkspace.moveConnections(block.childBlocks_[x],dx,dy);
+    }
+
+
+    console.log(oldConnectionDB);
+    console.log(newConnectionDB);
+    console.log("block out");
+
+};
+
+Blockly.Workspace.prototype.getTranslate = function () {
+    var translate = this.getCanvas().getAttribute("transform");
+    translate = translate.split("(")[1].split(")")[0];
+    return translate.split(",");
 };
