@@ -591,6 +591,12 @@ Blockly.Block.prototype.onMouseDown_ = function(e) {
   // Update Blockly's knowledge of its own location.
   Blockly.svgResize();
   Blockly.terminateDrag_();
+
+  // [Shirley 4/11] - everytime a block is clicked, it is put in the mainWorkspace
+  if (this.workspace.isMW) {
+    Blockly.mainWorkspace.moveOutOfFolder(this);
+  }
+
   this.select();
   Blockly.hideChaff();
   if (Blockly.isRightButton(e)) {
@@ -680,30 +686,19 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
       // resize to contain the newly positioned block.  Force a second resize
       // now that the block has been deleted.
       Blockly.fireUiEvent(window, 'resize');
-    } else if (Blockly.ALL_FOLDERS.length > 0) {
-        var over = false;
-         for (var i=0; i<Blockly.ALL_FOLDERS.length; i++) {
-           var folder = Blockly.ALL_FOLDERS[i];
-            if (folder != this_) { //don't add folder into itself
-                 if (folder.isOverFolder(e)) { //block not already in folder
-                     over = true;
-                     if (this_.workspace != folder.miniworkspace) {
-                         folder.miniworkspace.promote_();
-                         folder.miniworkspace.moveBlock(this_); //move the block into new workspace
-                     }
-                     break;
-                 }
-            }
-        }
-        //if it's not over a folder and it was in a folder, move it out
-        if (this_.isInFolder && !over){
-            Blockly.mainWorkspace.moveBlock(this_);
-        }
+    } else if (Blockly.selectedFolder_) {
+      Blockly.selectedFolder_.miniworkspace.moveIntoFolder(this_);
     }
+
     if (Blockly.highlightedConnection_) {
       Blockly.highlightedConnection_.unhighlight();
       Blockly.highlightedConnection_ = null;
     }
+
+    if (Blockly.selectedFolder_) {
+      Blockly.selectedFolder_.miniworkspace.unhighlight_();
+    }
+
   });
   if (! Blockly.Instrument.avoidRenderWorkspaceInMouseUp) {
     // [lyn, 04/01/14] rendering a workspace takes a *long* time and is *not* necessary!
@@ -1030,6 +1025,7 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
         Blockly.highlightedConnection_ = null;
         Blockly.localConnection_ = null;
       }
+
       // Add connection highlighting if needed.
       if (closestConnection &&
           closestConnection != Blockly.highlightedConnection_) {
@@ -1037,6 +1033,28 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
         Blockly.highlightedConnection_ = closestConnection;
         Blockly.localConnection_ = localConnection;
       }
+
+      //find the folder the block is over
+      var overFolder = null;
+      for (var i = 0; i < Blockly.ALL_FOLDERS.length; i++) {
+        if (Blockly.ALL_FOLDERS[i].isOverFolder(e)) {
+          overFolder = Blockly.ALL_FOLDERS[i];
+          break;
+        }
+      }
+      //remove highlighting if necessary
+      if (Blockly.selectedFolder_ &&
+          Blockly.selectedFolder_ != overFolder) {
+        Blockly.selectedFolder_.miniworkspace.unhighlight_();
+        Blockly.selectedFolder_ = null;
+      }
+      //add highlighting if necessary
+      if (overFolder && overFolder != Blockly.selectedFolder_) {
+        Blockly.selectedFolder_ = overFolder;
+        Blockly.selectedFolder_.miniworkspace.highlight_();
+      }
+
+
       // Flip the trash can lid if needed.
       if (this_.workspace.trashcan && this_.isDeletable()) {
         this_.workspace.trashcan.onMouseMove(e);

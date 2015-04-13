@@ -312,3 +312,17 @@ Blockly.MiniWorkspace.prototype.promote_ = function() {
     svgGroup.appendChild(this.svgGroup_);
     this.block_.promote();
 };
+
+Blockly.MiniWorkspace.prototype.highlight_ = function() {
+    Blockly.addClass_(/** @type {!Element} */ (this.svgGroupBack_),
+        'blocklySelectedFolder');
+    // Move the selected block to the top of the stack.
+    //this.svgGroupBack_.parentNode.appendChild(this.svgGroupBack_);
+    console.log("highlight");
+};
+
+Blockly.MiniWorkspace.prototype.unhighlight_ = function() {
+    Blockly.removeClass_(/** @type {!Element} */ (this.svgGroupBack_),
+        'blocklySelectedFolder');
+    console.log("unhighlight");
+};

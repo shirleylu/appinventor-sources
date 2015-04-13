@@ -60,6 +60,7 @@ Blockly.FolderIcon.prototype.toggleIcon = function() {
 
 Blockly.FolderIcon.prototype.iconClick_ = function(e) {
     this.toggleIcon();
+    this.block_.promote();
     if (this.block_.isEditable()) {
         if (!this.block_.isInFlyout) {
             this.setVisible(!this.isVisible());

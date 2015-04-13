@@ -204,6 +204,12 @@ Blockly.workspace_arranged_type = null;
 Blockly.selected = null;
 
 /**
+ * Currently selected folder.
+ *
+ */
+Blockly.selectedFolder_ = null;
+
+/**
  * Is Blockly in a read-only, non-editable mode?
  * Note that this property may only be set before init is called.
  * It can't be used to dynamically toggle editability on and off.

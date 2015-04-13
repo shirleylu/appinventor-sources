@@ -31,6 +31,10 @@
   stroke-width: 2;
   stroke-linecap: round;
 }
+.blocklySelectedFolder {
+    stroke-width: 3px;
+    stroke: #fc3;
+}
 .blocklySelected>.blocklyPath {
   stroke-width: 3px;
   stroke: #fc3;
