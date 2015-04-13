@@ -658,6 +658,10 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
   Blockly.resetWorkspaceArrangements();
   Blockly.doCommand(function() {
     Blockly.terminateDrag_();
+    if (Blockly.selectedFolder_) {
+      Blockly.selectedFolder_.miniworkspace.moveIntoFolder(this_);
+    }
+
     if (Blockly.selected && Blockly.highlightedConnection_) {
       // Connect two blocks together.
       Blockly.localConnection_.connect(Blockly.highlightedConnection_);
@@ -686,8 +690,6 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
       // resize to contain the newly positioned block.  Force a second resize
       // now that the block has been deleted.
       Blockly.fireUiEvent(window, 'resize');
-    } else if (Blockly.selectedFolder_) {
-      Blockly.selectedFolder_.miniworkspace.moveIntoFolder(this_);
     }
 
     if (Blockly.highlightedConnection_) {
@@ -1005,7 +1007,8 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
       //find the folder the block is over
       var overFolder = null;
       for (var i = 0; i < Blockly.ALL_FOLDERS.length; i++) {
-        if (Blockly.ALL_FOLDERS[i].isOverFolder(e)) {
+        if (this_ != Blockly.ALL_FOLDERS[i] &&
+            Blockly.ALL_FOLDERS[i].isOverFolder(e)) {
           overFolder = Blockly.ALL_FOLDERS[i];
           break;
         }

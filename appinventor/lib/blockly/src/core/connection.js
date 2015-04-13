@@ -421,11 +421,11 @@ Blockly.Connection.prototype.closest = function(maxLimit, dx, dy, folder) {
   var folderdy = 0;
 
   if (folder) {
-    console.log("over a folder");
     db = folder.miniworkspace.connectionDBList[oppositeType];
     var folderOrigin = Blockly.getRelativeXY_(folder.miniworkspace.svgGroup_);
-    folderdx = folderOrigin.x;
-    folderdy = folderOrigin.y;
+    var translate_ = folder.miniworkspace.getTranslate();
+    folderdx = folderOrigin.x + parseInt(translate_[0]);
+    folderdy = folderOrigin.y + parseInt(translate_[1]);
   }
 
   // Since this connection is probably being dragged, add the delta.

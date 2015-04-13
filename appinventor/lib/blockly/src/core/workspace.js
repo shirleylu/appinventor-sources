@@ -536,68 +536,68 @@ Blockly.Workspace.prototype.moveBlock = function(block) {
 
 //newWorkspace.moveIntoFolder(block)
 Blockly.Workspace.prototype.moveIntoFolder = function (block) {
-    var oldWorkspace = block.workspace;
-    var newWorkspace = this;
+  var oldWorkspace = block.workspace;
+  var newWorkspace = this;
 
-    var blockRelativeToMWXY = block.getRelativeToSurfaceXY();
-    var miniWorkspaceOrigin = Blockly.getRelativeXY_(newWorkspace.svgGroup_);
-    oldWorkspace.removeTopBlock(block);
-    newWorkspace.addTopBlock(block);
+  var blockRelativeToMWXY = block.getRelativeToSurfaceXY();
+  var miniWorkspaceOrigin = Blockly.getRelativeXY_(newWorkspace.svgGroup_);
+  oldWorkspace.removeTopBlock(block);
+  newWorkspace.addTopBlock(block);
 
-    // doesn't do the right thing v
-    //block.svg_.dispose(); //get rid of svg in old workspace
-    //surgically removes all svg associated with block from old workspace canvas
-    var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
-    block.workspace = newWorkspace;
-    newWorkspace.getCanvas().appendChild(svgGroup);
+  // doesn't do the right thing v
+  //block.svg_.dispose(); //get rid of svg in old workspace
+  //surgically removes all svg associated with block from old workspace canvas
+  var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
+  block.workspace = newWorkspace;
+  newWorkspace.getCanvas().appendChild(svgGroup);
 
-    var translate_ = newWorkspace.getTranslate();
+  var translate_ = newWorkspace.getTranslate();
 
-    var dx = -1 * miniWorkspaceOrigin.x - parseInt(translate_[0]);
-    var dy = -1 * miniWorkspaceOrigin.y - parseInt(translate_[1]);
+  var dx = -1 * miniWorkspaceOrigin.x - parseInt(translate_[0]);
+  var dy = -1 * miniWorkspaceOrigin.y - parseInt(translate_[1]);
 
-    var x = blockRelativeToMWXY.x + dx;
-    var y = blockRelativeToMWXY.y + dy;
-    block.svg_.getRootElement().setAttribute('transform',
-        'translate(' + x + ', ' + y + ')');
-    //newWorkspace.render();
+  var x = blockRelativeToMWXY.x + dx;
+  var y = blockRelativeToMWXY.y + dy;
+  block.svg_.getRootElement().setAttribute('transform',
+      'translate(' + x + ', ' + y + ')');
+  //newWorkspace.render();
 
-    return [dx, dy];
+  return [dx, dy];
 };
 
 //newWorkspace.moveOutOfFolder(block)
 Blockly.Workspace.prototype.moveOutOfFolder = function (block) {
-    if (block.workspace == Blockly.mainWorkspace) {
-        return;
-    }
-    var oldWorkspace = block.workspace;
-    var newWorkspace = this;
+  if (block.workspace == Blockly.mainWorkspace) {
+      return;
+  }
+  var oldWorkspace = block.workspace;
+  var newWorkspace = this;
 
-    var blockRelativeToWXY = block.getRelativeToSurfaceXY();
-    var miniWorkspaceOrigin = Blockly.getRelativeXY_(oldWorkspace.svgGroup_);
-    oldWorkspace.removeTopBlock(block);
-    newWorkspace.addTopBlock(block);
+  var blockRelativeToWXY = block.getRelativeToSurfaceXY();
+  var miniWorkspaceOrigin = Blockly.getRelativeXY_(oldWorkspace.svgGroup_);
+  oldWorkspace.removeTopBlock(block);
+  newWorkspace.addTopBlock(block);
 
-    // doesn't do the right thing v
-    //block.svg_.dispose(); //get rid of svg in old workspace
-    //surgically removes all svg associated with block from old workspace canvas
-    var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
-    block.workspace = newWorkspace;
-    newWorkspace.getCanvas().appendChild(svgGroup);
+  // doesn't do the right thing v
+  //block.svg_.dispose(); //get rid of svg in old workspace
+  //surgically removes all svg associated with block from old workspace canvas
+  var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
+  block.workspace = newWorkspace;
+  newWorkspace.getCanvas().appendChild(svgGroup);
 
-    var translate_ = oldWorkspace.getTranslate();
+  var translate_ = oldWorkspace.getTranslate();
 
-    var dx = miniWorkspaceOrigin.x + parseInt(translate_[0]);
-    var dy = miniWorkspaceOrigin.y + parseInt(translate_[1]);
+  var dx = miniWorkspaceOrigin.x + parseInt(translate_[0]);
+  var dy = miniWorkspaceOrigin.y + parseInt(translate_[1]);
 
-    var x = blockRelativeToWXY.x + dx;
-    var y = blockRelativeToWXY.y + dy;
-    block.svg_.getRootElement().setAttribute('transform',
-        'translate(' + x + ', ' + y + ')');
+  var x = blockRelativeToWXY.x + dx;
+  var y = blockRelativeToWXY.y + dy;
+  block.svg_.getRootElement().setAttribute('transform',
+      'translate(' + x + ', ' + y + ')');
 
-    //newWorkspace.render();
+  //newWorkspace.render();
 
-    return [dx, dy];
+  return [dx, dy];
 };
 
 Blockly.Workspace.prototype.moveConnections = function (block, dx, dy) {
