@@ -1002,6 +1002,26 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
             commentData.y + dy);
       }
 
+      //find the folder the block is over
+      var overFolder = null;
+      for (var i = 0; i < Blockly.ALL_FOLDERS.length; i++) {
+        if (Blockly.ALL_FOLDERS[i].isOverFolder(e)) {
+          overFolder = Blockly.ALL_FOLDERS[i];
+          break;
+        }
+      }
+      //remove highlighting if necessary
+      if (Blockly.selectedFolder_ &&
+          Blockly.selectedFolder_ != overFolder) {
+        Blockly.selectedFolder_.miniworkspace.unhighlight_();
+        Blockly.selectedFolder_ = null;
+      }
+      //add highlighting if necessary
+      if (overFolder && overFolder != Blockly.selectedFolder_) {
+        Blockly.selectedFolder_ = overFolder;
+        Blockly.selectedFolder_.miniworkspace.highlight_();
+      }
+
       // Check to see if any of this block's connections are within range of
       // another block's connection.
       var myConnections = this_.getConnections_(false);
@@ -1010,7 +1030,7 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
       var radiusConnection = Blockly.SNAP_RADIUS;
       for (var i = 0; i < myConnections.length; i++) {
         var myConnection = myConnections[i];
-        var neighbour = myConnection.closest(radiusConnection, dx, dy);
+        var neighbour = myConnection.closest(radiusConnection, dx, dy, Blockly.selectedFolder_);
         if (neighbour.connection) {
           closestConnection = neighbour.connection;
           localConnection = myConnection;
@@ -1032,26 +1052,6 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
         closestConnection.highlight();
         Blockly.highlightedConnection_ = closestConnection;
         Blockly.localConnection_ = localConnection;
-      }
-
-      //find the folder the block is over
-      var overFolder = null;
-      for (var i = 0; i < Blockly.ALL_FOLDERS.length; i++) {
-        if (Blockly.ALL_FOLDERS[i].isOverFolder(e)) {
-          overFolder = Blockly.ALL_FOLDERS[i];
-          break;
-        }
-      }
-      //remove highlighting if necessary
-      if (Blockly.selectedFolder_ &&
-          Blockly.selectedFolder_ != overFolder) {
-        Blockly.selectedFolder_.miniworkspace.unhighlight_();
-        Blockly.selectedFolder_ = null;
-      }
-      //add highlighting if necessary
-      if (overFolder && overFolder != Blockly.selectedFolder_) {
-        Blockly.selectedFolder_ = overFolder;
-        Blockly.selectedFolder_.miniworkspace.highlight_();
       }
 
 
