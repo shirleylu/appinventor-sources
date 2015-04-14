@@ -480,124 +480,163 @@ Blockly.Workspace.prototype['clear'] = Blockly.Workspace.prototype.clear;
 // newworkspace: this
 // oldworkspace and newworkspace will always be different when called!
 Blockly.Workspace.prototype.moveBlock = function(block) {
-    var oldWorkspace = block.workspace;
-    var newWorkspace = this;
-    //var dom = Blockly.Xml.blockToDom_(block);
-    //var bl = Blockly.Xml.domToBlock(this,dom);
 
-    var changeMatrix;
-
-    // 3 cases: main -> folder, folder -> main, folder -> folder
-    if (!oldWorkspace.isMW && newWorkspace.isMW) {
-        changeMatrix = this.moveIntoFolder(block);
-    }
-    else if (oldWorkspace.isMW && !newWorkspace.isMW) {
-        changeMatrix = this.moveOutOfFolder(block);
-    }
-    else if (oldWorkspace.isMW && newWorkspace.isMW) {
-
-        var blockRelativeToMWXY = block.getRelativeToSurfaceXY();
-        var oldMiniWorkspaceOrigin = Blockly.getRelativeXY_(oldWorkspace.svgGroup_);
-        var newMiniWorkspaceOrigin = Blockly.getRelativeXY_(newWorkspace.svgGroup_);
-        oldWorkspace.removeTopBlock(block);
-        newWorkspace.addTopBlock(block);
-
-        var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
-        block.workspace = newWorkspace;
-        newWorkspace.getCanvas().appendChild(svgGroup);
-
-        var oldTranslate_ = oldWorkspace.getTranslate();
-        var newTranslate_ = newWorkspace.getTranslate();
-
-        var dx = oldMiniWorkspaceOrigin.x + parseInt(oldTranslate_[0])
-            - newMiniWorkspaceOrigin.x - parseInt(newTranslate_[0]);
-        var dy = oldMiniWorkspaceOrigin.y + parseInt(oldTranslate_[1])
-            - newMiniWorkspaceOrigin.y - parseInt(newTranslate_[1]);
-
-        changeMatrix = [dx, dy];
-
-        var x = blockRelativeToMWXY.x + dx;
-        var y = blockRelativeToMWXY.y + dy;
-        block.svg_.getRootElement().setAttribute('transform',
-            'translate(' + x + ', ' + y + ')');
-    }
-    for (var cb = 0; cb < block.childBlocks_.length; cb++) {
-        var childBlock = block.childBlocks_[cb];
-        childBlock.workspace = newWorkspace;
-    }
-
-    // at this point, block.workspace is the newWorkspace
-    oldWorkspace.moveConnections(block, changeMatrix[0], changeMatrix[1]);
-
-    block.isInFolder = this.isMW? true : false;
-    //block.dispose();
-    //this.fireChangeEvent();
+  this.moveIntoFolder(block);
+  for (var cb = 0; cb < block.childBlocks_.length; cb++) {
+      var childBlock = block.childBlocks_[cb];
+      childBlock.workspace = this;
+  }
 };
 
 //newWorkspace.moveIntoFolder(block)
 Blockly.Workspace.prototype.moveIntoFolder = function (block) {
-  var oldWorkspace = block.workspace;
+  // The oldWorkspace will always be the mainWorkspace
+  var oldWorkspace = Blockly.mainWorkspace;
+  // newWorkspace will always be this
   var newWorkspace = this;
 
+  // Move the Block into the right place in the folder
   var blockRelativeToMWXY = block.getRelativeToSurfaceXY();
-  var miniWorkspaceOrigin = Blockly.getRelativeXY_(newWorkspace.svgGroup_);
-  oldWorkspace.removeTopBlock(block);
-  newWorkspace.addTopBlock(block);
-
-  // doesn't do the right thing v
-  //block.svg_.dispose(); //get rid of svg in old workspace
+  var miniWorkspaceOrigin = Blockly.getRelativeXY_(this.svgGroup_);
+  Blockly.mainWorkspace.removeTopBlock(block);
+  this.addTopBlock(block);
   //surgically removes all svg associated with block from old workspace canvas
   var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
-  block.workspace = newWorkspace;
-  newWorkspace.getCanvas().appendChild(svgGroup);
+  block.workspace = this;
+  this.getCanvas().appendChild(svgGroup);
 
-  var translate_ = newWorkspace.getTranslate();
-
-  var dx = -1 * miniWorkspaceOrigin.x - parseInt(translate_[0]);
-  var dy = -1 * miniWorkspaceOrigin.y - parseInt(translate_[1]);
-
+  var translate_ = this.getTranslate();
+  var dx = -1 * (miniWorkspaceOrigin.x + parseInt(translate_[0]));
+  var dy = -1 * (miniWorkspaceOrigin.y + parseInt(translate_[1]));
   var x = blockRelativeToMWXY.x + dx;
   var y = blockRelativeToMWXY.y + dy;
   block.svg_.getRootElement().setAttribute('transform',
       'translate(' + x + ', ' + y + ')');
-  //newWorkspace.render();
 
-  return [dx, dy];
+  // Change the Block's connection's x and y
+  if (block.outputConnection) {
+    block.outputConnection.x_ += dx;
+    block.outputConnection.y_ += dy;
+  }
+  if (block.nextConnection) {
+    block.nextConnection.x_ += dx;
+    block.nextConnection.y_ += dy;
+  }
+  if (block.previousConnection) {
+    block.previousConnection.x_ += dx;
+    block.previousConnection.y_ += dy;
+  }
+  if (block.inputList) {
+    for (var i = 0; i < block.inputList.length; i++) {
+      var c = block.inputList[i];
+      if (c.connection) {
+        c.connection.x_ += dx;
+        c.connection.y_ += dy;
+      }
+    }
+  }
+
+  // Change the old workspace and new workspace's connectionDBList
+  if (block.outputConnection) {
+    oldWorkspace.connectionDBList[Blockly.OUTPUT_VALUE].removeConnection_(block.outputConnection);
+    newWorkspace.connectionDBList[Blockly.OUTPUT_VALUE].addConnection_(block.outputConnection);
+  }
+  if (block.nextConnection) {
+    oldWorkspace.connectionDBList[Blockly.NEXT_STATEMENT].removeConnection_(block.nextConnection);
+    newWorkspace.connectionDBList[Blockly.NEXT_STATEMENT].addConnection_(block.nextConnection);
+  }
+  if (block.previousConnection) {
+    oldWorkspace.connectionDBList[Blockly.PREVIOUS_STATEMENT].removeConnection_(block.previousConnection);
+    newWorkspace.connectionDBList[Blockly.PREVIOUS_STATEMENT].addConnection_(block.previousConnection);
+  }
+  if (block.inputList) {
+    for (var i = 0; i < block.inputList.length; i++) {
+      var c = block.inputList[i];
+      if (c.connection) {
+        console.log(c.connection);
+        oldWorkspace.connectionDBList[Blockly.INPUT_VALUE].removeConnection_(c.connection);
+        newWorkspace.connectionDBList[Blockly.INPUT_VALUE].addConnection_(c.connection);
+      }
+    }
+  }
+
 };
 
 //newWorkspace.moveOutOfFolder(block)
 Blockly.Workspace.prototype.moveOutOfFolder = function (block) {
+  // this is used everytime a block is clicked - if it's in main, don't move it
   if (block.workspace == Blockly.mainWorkspace) {
       return;
   }
+
+  //Move block into the right place in the main workspace
   var oldWorkspace = block.workspace;
   var newWorkspace = this;
-
   var blockRelativeToWXY = block.getRelativeToSurfaceXY();
   var miniWorkspaceOrigin = Blockly.getRelativeXY_(oldWorkspace.svgGroup_);
   oldWorkspace.removeTopBlock(block);
   newWorkspace.addTopBlock(block);
-
-  // doesn't do the right thing v
-  //block.svg_.dispose(); //get rid of svg in old workspace
   //surgically removes all svg associated with block from old workspace canvas
   var svgGroup = goog.dom.removeNode(block.svg_.svgGroup_);
   block.workspace = newWorkspace;
   newWorkspace.getCanvas().appendChild(svgGroup);
 
   var translate_ = oldWorkspace.getTranslate();
-
   var dx = miniWorkspaceOrigin.x + parseInt(translate_[0]);
   var dy = miniWorkspaceOrigin.y + parseInt(translate_[1]);
-
   var x = blockRelativeToWXY.x + dx;
   var y = blockRelativeToWXY.y + dy;
   block.svg_.getRootElement().setAttribute('transform',
       'translate(' + x + ', ' + y + ')');
+  block.isInFolder = false;
 
-  //newWorkspace.render();
+  // Change the Block's connection's x and y
+  if (block.outputConnection) {
+    block.outputConnection.x_ += dx;
+    block.outputConnection.y_ += dy;
+  }
+  if (block.nextConnection) {
+    block.nextConnection.x_ += dx;
+    block.nextConnection.y_ += dy;
+  }
+  if (block.previousConnection) {
+    block.previousConnection.x_ += dx;
+    block.previousConnection.y_ += dy;
+  }
+  if (block.inputList) {
+    for (var i = 0; i < block.inputList.length; i++) {
+      var c = block.inputList[i];
+      if (c.connection) {
+        c.connection.x_ += dx;
+        c.connection.y_ += dy;
+      }
+    }
+  }
 
-  return [dx, dy];
+  // Change the old workspace and new workspace's connectionDBList
+  if (block.outputConnection) {
+    oldWorkspace.connectionDBList[Blockly.OUTPUT_VALUE].removeConnection_(block.outputConnection);
+    newWorkspace.connectionDBList[Blockly.OUTPUT_VALUE].addConnection_(block.outputConnection);
+  }
+  if (block.nextConnection) {
+    oldWorkspace.connectionDBList[Blockly.NEXT_STATEMENT].removeConnection_(block.nextConnection);
+    newWorkspace.connectionDBList[Blockly.NEXT_STATEMENT].addConnection_(block.nextConnection);
+  }
+  if (block.previousConnection) {
+    oldWorkspace.connectionDBList[Blockly.PREVIOUS_STATEMENT].removeConnection_(block.previousConnection);
+    newWorkspace.connectionDBList[Blockly.PREVIOUS_STATEMENT].addConnection_(block.previousConnection);
+  }
+  if (block.inputList) {
+    for (var i = 0; i < block.inputList.length; i++) {
+      var c = block.inputList[i];
+      if (c.connection) {
+        console.log(c.connection);
+        oldWorkspace.connectionDBList[Blockly.INPUT_VALUE].removeConnection_(c.connection);
+        newWorkspace.connectionDBList[Blockly.INPUT_VALUE].addConnection_(c.connection);
+      }
+    }
+  }
+
 };
 
 Blockly.Workspace.prototype.moveConnections = function (block, dx, dy) {

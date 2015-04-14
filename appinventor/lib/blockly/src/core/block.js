@@ -592,11 +592,6 @@ Blockly.Block.prototype.onMouseDown_ = function(e) {
   Blockly.svgResize();
   Blockly.terminateDrag_();
 
-  // [Shirley 4/11] - everytime a block is clicked, it is put in the mainWorkspace
-  if (this.workspace.isMW) {
-    Blockly.mainWorkspace.moveOutOfFolder(this);
-  }
-
   this.select();
   Blockly.hideChaff();
   if (Blockly.isRightButton(e)) {
@@ -611,6 +606,13 @@ Blockly.Block.prototype.onMouseDown_ = function(e) {
     // Left-click (or middle click)
     Blockly.removeAllRanges();
     Blockly.setCursorHand_(true);
+    // [Shirley 4/11] - everytime a block is clicked, it is put in the mainWorkspace
+    if (this.workspace.isMW) {
+      console.log(this);
+      this.setParent(null);
+      this.setDragging_(true);
+      Blockly.mainWorkspace.moveOutOfFolder(this);
+    }
     // Look up the current translation and record it.
     var xy = this.getRelativeToSurfaceXY();
     this.startDragX = xy.x;
@@ -659,7 +661,7 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
   Blockly.doCommand(function() {
     Blockly.terminateDrag_();
     if (Blockly.selectedFolder_) {
-      Blockly.selectedFolder_.miniworkspace.moveIntoFolder(this_);
+      Blockly.selectedFolder_.miniworkspace.moveBlock(this_);
     }
 
     if (Blockly.selected && Blockly.highlightedConnection_) {
@@ -699,6 +701,7 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
 
     if (Blockly.selectedFolder_) {
       Blockly.selectedFolder_.miniworkspace.unhighlight_();
+      Blockly.selectedFolder_ = null;
     }
 
   });
