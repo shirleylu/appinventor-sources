@@ -105,6 +105,11 @@ Blockly.Css.CONTENT = [
   '  stroke-linecap: round;',
   '}',
 
+  '.blocklySelectedFolder {',
+  'stroke-width: 10px;',
+  'stroke: #f33;',
+  '}',
+
   '.blocklySelected>.blocklyPath {',
   '  stroke-width: 3px;',
   '  stroke: #fc3;',
@@ -343,6 +348,11 @@ Blockly.Css.CONTENT = [
   '  outline: none;',
   '  width: 100%',
   '}',
+
+  '.blocklyFolderBackground {',
+  'fill: rgba(1,1,1,0);',
+  '}',
+
   '.blocklyContextMenuBackground,',
   '.blocklyMutatorBackground {',
   '  fill: #fff;',
