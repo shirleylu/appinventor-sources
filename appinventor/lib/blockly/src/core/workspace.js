@@ -482,10 +482,7 @@ Blockly.Workspace.prototype['clear'] = Blockly.Workspace.prototype.clear;
 Blockly.Workspace.prototype.moveBlock = function(block) {
 
   this.moveIntoFolder(block);
-  for (var cb = 0; cb < block.childBlocks_.length; cb++) {
-      var childBlock = block.childBlocks_[cb];
-      childBlock.workspace = this;
-  }
+  this.moveChild(block);
 };
 
 //newWorkspace.moveIntoFolder(block)
@@ -513,42 +510,25 @@ Blockly.Workspace.prototype.moveIntoFolder = function (block) {
   block.svg_.getRootElement().setAttribute('transform',
       'translate(' + x + ', ' + y + ')');
 
-  // Change the Block's connection's x and y
-  if (block.outputConnection) {
-    block.outputConnection.x_ += dx;
-    block.outputConnection.y_ += dy;
-  }
-  if (block.nextConnection) {
-    block.nextConnection.x_ += dx;
-    block.nextConnection.y_ += dy;
-  }
-  if (block.previousConnection) {
-    block.previousConnection.x_ += dx;
-    block.previousConnection.y_ += dy;
-  }
-  if (block.inputList) {
-    for (var i = 0; i < block.inputList.length; i++) {
-      var c = block.inputList[i];
-      if (c.connection) {
-        c.connection.x_ += dx;
-        c.connection.y_ += dy;
-      }
-    }
-  }
-
-  // Change the old workspace and new workspace's connectionDBList
+  // remove, change x & y, add
   if (block.outputConnection) {
     oldWorkspace.connectionDBList[block.outputConnection.type].removeConnection_(block.outputConnection);
+    block.outputConnection.x_ += dx;
+    block.outputConnection.y_ += dy;
     newWorkspace.connectionDBList[block.outputConnection.type].addConnection_(block.outputConnection);
     block.outputConnection.dbList_ = newWorkspace.connectionDBList;
   }
   if (block.nextConnection) {
     oldWorkspace.connectionDBList[block.nextConnection.type].removeConnection_(block.nextConnection);
+    block.nextConnection.x_ += dx;
+    block.nextConnection.y_ += dy;
     newWorkspace.connectionDBList[block.nextConnection.type].addConnection_(block.nextConnection);
     block.nextConnection.dbList_ = newWorkspace.connectionDBList;
   }
   if (block.previousConnection) {
     oldWorkspace.connectionDBList[block.previousConnection.type].removeConnection_(block.previousConnection);
+    block.previousConnection.x_ += dx;
+    block.previousConnection.y_ += dy;
     newWorkspace.connectionDBList[block.previousConnection.type].addConnection_(block.previousConnection);
     block.previousConnection.dbList_ = newWorkspace.connectionDBList;
   }
@@ -557,6 +537,8 @@ Blockly.Workspace.prototype.moveIntoFolder = function (block) {
       var c = block.inputList[i];
       if (c.connection) {
         oldWorkspace.connectionDBList[c.connection.type].removeConnection_(c.connection);
+        c.connection.x_ += dx;
+        c.connection.y_ += dy;
         newWorkspace.connectionDBList[c.connection.type].addConnection_(c.connection);
         c.connection.dbList_ = newWorkspace.connectionDBList;
       }
@@ -593,42 +575,25 @@ Blockly.Workspace.prototype.moveOutOfFolder = function (block) {
       'translate(' + x + ', ' + y + ')');
   block.isInFolder = false;
 
-  // Change the Block's connection's x and y
-  if (block.outputConnection) {
-    block.outputConnection.x_ += dx;
-    block.outputConnection.y_ += dy;
-  }
-  if (block.nextConnection) {
-    block.nextConnection.x_ += dx;
-    block.nextConnection.y_ += dy;
-  }
-  if (block.previousConnection) {
-    block.previousConnection.x_ += dx;
-    block.previousConnection.y_ += dy;
-  }
-  if (block.inputList) {
-    for (var i = 0; i < block.inputList.length; i++) {
-      var c = block.inputList[i];
-      if (c.connection) {
-        c.connection.x_ += dx;
-        c.connection.y_ += dy;
-      }
-    }
-  }
-
   // Change the old workspace and new workspace's connectionDBList
   if (block.outputConnection) {
     oldWorkspace.connectionDBList[block.outputConnection.type].removeConnection_(block.outputConnection);
+    block.outputConnection.x_ += dx;
+    block.outputConnection.y_ += dy;
     newWorkspace.connectionDBList[block.outputConnection.type].addConnection_(block.outputConnection);
     block.outputConnection.dbList_ = newWorkspace.connectionDBList;
   }
   if (block.nextConnection) {
     oldWorkspace.connectionDBList[block.nextConnection.type].removeConnection_(block.nextConnection);
+    block.nextConnection.x_ += dx;
+    block.nextConnection.y_ += dy;
     newWorkspace.connectionDBList[block.nextConnection.type].addConnection_(block.nextConnection);
     block.nextConnection.dbList_ = newWorkspace.connectionDBList;
   }
   if (block.previousConnection) {
     oldWorkspace.connectionDBList[block.previousConnection.type].removeConnection_(block.previousConnection);
+    block.previousConnection.x_ += dx;
+    block.previousConnection.y_ += dy;
     newWorkspace.connectionDBList[block.previousConnection.type].addConnection_(block.previousConnection);
     block.previousConnection.dbList_ = newWorkspace.connectionDBList;
   }
@@ -643,73 +608,19 @@ Blockly.Workspace.prototype.moveOutOfFolder = function (block) {
     }
   }
 
+  newWorkspace.moveChild(block);
+
   return [dx,dy];
 
 };
 
-Blockly.Workspace.prototype.moveConnections = function (block, dx, dy) {
-    var oldWorkspace = this;
-    var newWorkspace = block.workspace;
-
-    var oldConnectionDB = oldWorkspace.connectionDBList;
-    var newConnectionDB = newWorkspace.connectionDBList;
-
-    console.log("block in");
-    console.log(oldConnectionDB);
-    console.log(newConnectionDB);
-
-    //change the connection.
-    // Need to change output connection, inputlist connections, previous connection
-    if (block.outputConnection) {
-        var type = block.outputConnection.type;
-        oldConnectionDB[type].removeConnection_(block.outputConnection);
-        newConnectionDB[type].addConnection_(block.outputConnection);
-        block.outputConnection.dbList_ = newConnectionDB;
-        block.outputConnection.x_ += dx;
-        block.outputConnection.y_ += dy;
-    }
-    if (block.previousConnection) {
-        var type = block.previousConnection.type;
-        oldConnectionDB[type].removeConnection_(block.previousConnection);
-        newConnectionDB[type].addConnection_(block.previousConnection);
-        block.previousConnection.dbList_ = newConnectionDB;
-        block.previousConnection.x_ += dx;
-        block.previousConnection.y_ += dy;
-    }
-    if (block.nextConnection) {
-        var type = block.nextConnection.type;
-        oldConnectionDB[type].removeConnection_(block.nextConnection);
-        newConnectionDB[type].addConnection_(block.nextConnection);
-        block.nextConnection.dbList_ = newConnectionDB;
-        block.nextConnection.x_ += dx;
-        block.nextConnection.y_ += dy;
-    }
-    if (block.inputList) {
-        var input, type;
-        for (var x = 0; x < block.inputList.length; x++) {
-            input = block.inputList[x];
-            if (input.connection) {
-                type = input.connection.type;
-                oldConnectionDB[type].removeConnection_(input.connection);
-                newConnectionDB[type].addConnection_(input.connection);
-                input.connection.dbList_ = newConnectionDB;
-                input.connection.x_ += dx;
-                input.connection.y_ += dy;
-            }
-        }
-    }
-
-    // must also move the connections of childblocks
-    for (var x = 0; x < block.childBlocks_.length; x++) {
-        oldWorkspace.moveConnections(block.childBlocks_[x],dx,dy);
-    }
-
-
-    console.log(oldConnectionDB);
-    console.log(newConnectionDB);
-    console.log("block out");
-
-};
+Blockly.Workspace.prototype.moveChild = function(block){
+  for (var cb = 0; cb < block.childBlocks_.length; cb++) {
+    var childBlock = block.childBlocks_[cb];
+    this.moveChild(childBlock);
+    childBlock.workspace = this;
+  }
+}
 
 Blockly.Workspace.prototype.getTranslate = function () {
     var translate = this.getCanvas().getAttribute("transform");
