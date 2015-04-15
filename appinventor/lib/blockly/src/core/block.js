@@ -585,6 +585,7 @@ Blockly.Block.prototype.getHeightWidthNeil = function() {
  * @private
  */
 Blockly.Block.prototype.onMouseDown_ = function(e) {
+  console.log(e);
   if (this.isInFlyout) {
     return;
   }
@@ -606,13 +607,6 @@ Blockly.Block.prototype.onMouseDown_ = function(e) {
     // Left-click (or middle click)
     Blockly.removeAllRanges();
     Blockly.setCursorHand_(true);
-    // [Shirley 4/11] - everytime a block is clicked, it is put in the mainWorkspace
-    if (this.workspace.isMW) {
-      console.log(this);
-      this.setParent(null);
-      this.setDragging_(true);
-      Blockly.mainWorkspace.moveOutOfFolder(this);
-    }
     // Look up the current translation and record it.
     var xy = this.getRelativeToSurfaceXY();
     this.startDragX = xy.x;
@@ -991,6 +985,12 @@ Blockly.Block.prototype.onMouseMove_ = function(e) {
         this_.setParent(null);
         this_.setDragging_(true);
       }
+    }
+    // [Shirley 4/11] - everytime a block is clicked, it is put in the mainWorkspace
+    if (this_.workspace.isMW) {
+      var transformMatrix = Blockly.mainWorkspace.moveOutOfFolder(this_);
+      this_.startDragX += transformMatrix[0];
+      this_.startDragY += transformMatrix[1];
     }
     if (Blockly.Block.dragMode_ == 2) {
       // Unrestricted dragging.
