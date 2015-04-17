@@ -119,6 +119,8 @@ Blockly.MiniWorkspace.setWorkspaceMetrics_ = function(xyRatio) {
 Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anchorY) {
     this.createDom();
 
+    Blockly.ConnectionDB.init(this);
+    this.block_.expandedFolder_ = true;
     this.workspace_ = folder.workspace;
     this.shape_ = folder.svg_.svgPath_;
     var canvas = Blockly.mainWorkspace.getCanvas();
@@ -160,9 +162,12 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
     //    bl.IsInFolder = true;
     //}
     //this.fireChangeEvent();
-    if (this.xml)
+    if (this.xml) {
+        this.clear();
         Blockly.Xml.domToWorkspace(this, this.xml);
+    }
 
+    this.render();
 
     if (!Blockly.readOnly) {
         Blockly.bindEvent_(this.svgGroupBack_, 'mousedown', this,
@@ -172,6 +177,10 @@ Blockly.MiniWorkspace.prototype.renderWorkspace = function (folder, anchorX, anc
 
 //TODO
 Blockly.MiniWorkspace.prototype.disposeWorkspace = function () {
+    for (var i = 1; i < 5; i++) {
+        console.log(i+" "+this.connectionDBList[i].length);
+    }
+
     Blockly.MiniWorkspace.unbindDragEvents_();
     // Dispose of and unlink the bubble.
     goog.dom.removeNode(this.svgGroup_);
@@ -182,6 +191,7 @@ Blockly.MiniWorkspace.prototype.disposeWorkspace = function () {
     this.workspace_ = null;
     this.content_ = null;
     this.shape_ = null;
+    this.block_.expandedFolder_ = false;
 
     for (var t = 0, block; block = this.topBlocks_[t]; t++) {
         block.rendered = false;

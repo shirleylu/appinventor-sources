@@ -246,6 +246,7 @@ Blockly.Versioning.ensureWorkspace = function (blocksRep) {
     Blockly.Versioning.log("Blockly.Versioning.ensureWorkspace: converting dom to Blockly.mainWorkspace");
     Blockly.mainWorkspace.clear(); // Remove any existing blocks before we add new ones.
     Blockly.Xml.domToWorkspace(Blockly.mainWorkspace, blocksRep);
+    console.log(Blockly.mainWorkspace);
     return Blockly.mainWorkspace;
   } else {
     throw "Blockly.Versioning.ensureWorkspace: blocksRep is neither workspace nor dom -- " + blocksRep;

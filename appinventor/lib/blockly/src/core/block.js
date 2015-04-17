@@ -657,9 +657,11 @@ Blockly.Block.prototype.onMouseUp_ = function(e) {
   Blockly.resetWorkspaceArrangements();
   Blockly.doCommand(function() {
     Blockly.terminateDrag_();
+
     if (Blockly.selectedFolder_) {
       Blockly.selectedFolder_.miniworkspace.moveBlock(this_);
     }
+
 
     if (Blockly.selected && Blockly.highlightedConnection_) {
       // Connect two blocks together.

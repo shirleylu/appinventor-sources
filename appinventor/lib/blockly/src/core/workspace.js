@@ -512,37 +512,37 @@ Blockly.Workspace.prototype.moveIntoFolder = function (block) {
 
   // remove, change x & y, add
   if (block.outputConnection) {
-    oldWorkspace.connectionDBList[block.outputConnection.type].removeConnection_(block.outputConnection);
-    block.outputConnection.x_ += dx;
-    block.outputConnection.y_ += dy;
-    newWorkspace.connectionDBList[block.outputConnection.type].addConnection_(block.outputConnection);
-    block.outputConnection.dbList_ = newWorkspace.connectionDBList;
+    changeConnection(block.outputConnection);
   }
   if (block.nextConnection) {
-    oldWorkspace.connectionDBList[block.nextConnection.type].removeConnection_(block.nextConnection);
-    block.nextConnection.x_ += dx;
-    block.nextConnection.y_ += dy;
-    newWorkspace.connectionDBList[block.nextConnection.type].addConnection_(block.nextConnection);
-    block.nextConnection.dbList_ = newWorkspace.connectionDBList;
+    changeConnection(block.nextConnection);
   }
   if (block.previousConnection) {
-    oldWorkspace.connectionDBList[block.previousConnection.type].removeConnection_(block.previousConnection);
-    block.previousConnection.x_ += dx;
-    block.previousConnection.y_ += dy;
-    newWorkspace.connectionDBList[block.previousConnection.type].addConnection_(block.previousConnection);
-    block.previousConnection.dbList_ = newWorkspace.connectionDBList;
+    changeConnection(block.previousConnection);
   }
   if (block.inputList) {
     for (var i = 0; i < block.inputList.length; i++) {
       var c = block.inputList[i];
       if (c.connection) {
-        oldWorkspace.connectionDBList[c.connection.type].removeConnection_(c.connection);
-        c.connection.x_ += dx;
-        c.connection.y_ += dy;
-        newWorkspace.connectionDBList[c.connection.type].addConnection_(c.connection);
-        c.connection.dbList_ = newWorkspace.connectionDBList;
+        changeConnection(c.connection);
       }
     }
+  }
+
+  function changeConnection (connect) {
+    oldWorkspace.connectionDBList[connect.type].removeConnection_(connect);
+    connect.x_ += dx;
+    connect.y_ += dy;
+    newWorkspace.connectionDBList[connect.type].addConnection_(connect);
+    if (connect.targetConnection) {
+      var tconnect = connect.targetConnection;
+      oldWorkspace.connectionDBList[tconnect.type].removeConnection_(tconnect);
+      tconnect.x_ += dx;
+      tconnect.y_ += dy;
+      newWorkspace.connectionDBList[tconnect.type].addConnection_(tconnect);
+      tconnect.dbList_ = newWorkspace.connectionDBList;
+    }
+    connect.dbList_ = newWorkspace.connectionDBList;
   }
 
 };
@@ -577,35 +577,37 @@ Blockly.Workspace.prototype.moveOutOfFolder = function (block) {
 
   // Change the old workspace and new workspace's connectionDBList
   if (block.outputConnection) {
-    oldWorkspace.connectionDBList[block.outputConnection.type].removeConnection_(block.outputConnection);
-    block.outputConnection.x_ += dx;
-    block.outputConnection.y_ += dy;
-    newWorkspace.connectionDBList[block.outputConnection.type].addConnection_(block.outputConnection);
-    block.outputConnection.dbList_ = newWorkspace.connectionDBList;
+    changeConnection(block.outputConnection);
   }
   if (block.nextConnection) {
-    oldWorkspace.connectionDBList[block.nextConnection.type].removeConnection_(block.nextConnection);
-    block.nextConnection.x_ += dx;
-    block.nextConnection.y_ += dy;
-    newWorkspace.connectionDBList[block.nextConnection.type].addConnection_(block.nextConnection);
-    block.nextConnection.dbList_ = newWorkspace.connectionDBList;
+    changeConnection(block.nextConnection);
   }
   if (block.previousConnection) {
-    oldWorkspace.connectionDBList[block.previousConnection.type].removeConnection_(block.previousConnection);
-    block.previousConnection.x_ += dx;
-    block.previousConnection.y_ += dy;
-    newWorkspace.connectionDBList[block.previousConnection.type].addConnection_(block.previousConnection);
-    block.previousConnection.dbList_ = newWorkspace.connectionDBList;
+    changeConnection(block.previousConnection);
   }
   if (block.inputList) {
     for (var i = 0; i < block.inputList.length; i++) {
       var c = block.inputList[i];
       if (c.connection) {
-        oldWorkspace.connectionDBList[c.connection.type].removeConnection_(c.connection);
-        newWorkspace.connectionDBList[c.connection.type].addConnection_(c.connection);
-        c.connection.dbList_ = newWorkspace.connectionDBList;
+        changeConnection(c.connection);
       }
     }
+  }
+
+  function changeConnection (connect) {
+    oldWorkspace.connectionDBList[connect.type].removeConnection_(connect);
+    connect.x_ += dx;
+    connect.y_ += dy;
+    newWorkspace.connectionDBList[connect.type].addConnection_(connect);
+    if (connect.targetConnection) {
+      var tconnect = connect.targetConnection;
+      oldWorkspace.connectionDBList[tconnect.type].removeConnection_(tconnect);
+      tconnect.x_ += dx;
+      tconnect.y_ += dy;
+      newWorkspace.connectionDBList[tconnect.type].addConnection_(tconnect);
+      tconnect.dbList_ = newWorkspace.connectionDBList;
+    }
+    connect.dbList_ = newWorkspace.connectionDBList;
   }
 
   newWorkspace.moveChild(block);
